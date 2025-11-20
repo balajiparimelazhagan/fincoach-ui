@@ -1,5 +1,8 @@
 import { IonApp, setupIonicReact } from '@ionic/react';
+import { IonReactRouter } from '@ionic/react-router';
+import { Route, Redirect } from 'react-router-dom';
 import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -24,9 +27,10 @@ import '@ionic/react/css/display.css';
  * https://ionicframework.com/docs/theming/dark-mode
  */
 
+/* Dark theme disabled - using light/white theme */
 /* import '@ionic/react/css/palettes/dark.always.css'; */
 /* import '@ionic/react/css/palettes/dark.class.css'; */
-import '@ionic/react/css/palettes/dark.system.css';
+/* import '@ionic/react/css/palettes/dark.system.css'; */
 
 /* Theme variables */
 import './theme/variables.css';
@@ -36,7 +40,11 @@ setupIonicReact();
 const App: React.FC = () => {
   return (
     <IonApp>
-      <Login />
+      <IonReactRouter>
+        <Route exact path="/login" component={Login} />
+        <Route exact path="/dashboard" component={Dashboard} />
+        <Route exact path="/" render={() => <Redirect to="/login" />} />
+      </IonReactRouter>
     </IonApp>
   );
 };
