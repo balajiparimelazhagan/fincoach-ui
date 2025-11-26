@@ -6,6 +6,7 @@ import {
   calendarOutline, 
   alertCircleOutline 
 } from 'ionicons/icons';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
@@ -21,13 +22,13 @@ const Footer: React.FC = () => {
         </button>
 
         {/* Budget */}
-        <button className="flex flex-col items-center gap-1 flex-1">
+        <Link to="/transactions" className="flex flex-col items-center gap-1 flex-1">
           <IonIcon 
             icon={barChartOutline} 
             className="text-gray-700 text-2xl"
           />
           <span className="text-xs text-gray-700">Budget</span>
-        </button>
+        </Link>
 
         {/* Central Add Button */}
         <button className="w-14 h-14 rounded-full! bg-orange-200 flex items-center justify-center shadow-md -mt-12 active:bg-orange-300 transition-colors">
