@@ -30,7 +30,7 @@ const Footer: React.FC = () => {
         </button>
 
         {/* Central Add Button */}
-        <button className="w-14 h-14 !rounded-full bg-orange-200 flex items-center justify-center shadow-md -mt-12 active:bg-orange-300 transition-colors">
+        <button className="w-14 h-14 rounded-full! bg-orange-200 flex items-center justify-center shadow-md -mt-12 active:bg-orange-300 transition-colors">
           <IonIcon 
             icon={add} 
             className="text-black text-3xl"

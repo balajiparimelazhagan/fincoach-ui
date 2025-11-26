@@ -23,44 +23,36 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userProfile }) => {
     <IonHeader className="ion-no-border">
       <IonToolbar>
         <div className="flex items-center justify-between w-full px-4 py-3">
-          {/* Left side - Welcome text */}
-          <div className="flex flex-col">
-            <span className="text-sm text-gray-400">Welcome</span>
-            <span className="text-xl font-bold text-gray-900">{displayName}</span>
+          {/* Left: Avatar + Name */}
+          <div className="flex items-center gap-3">
+            {/* Profile picture */}
+            <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200 shadow-sm">
+              <img
+                src={userProfile?.picture ?? '/default-profile-pic.png'}
+                alt="Profile"
+                className="w-[90%] h-[90%] object-cover mx-auto my-auto"
+                onError={(e) => { (e.target as HTMLImageElement).src = '/default-profile-pic.png'; }}
+              />
+            </div>
+
+            {/* Welcome text */}
+            <div className="flex flex-col leading-tight">
+              <span className="text-xs text-gray-400">Welcome</span>
+              <span className="text-lg font-semibold text-gray-900">{displayName}</span>
+            </div>
           </div>
 
-          {/* Right side - Icons */}
+          {/* Right side - Notification bell */}
           <div className="flex items-center gap-3">
-            {/* Notification bell with badge */}
             <div className="relative">
-              <button className="w-10 h-10 !rounded-full bg-orange-200 flex items-center justify-center active:bg-orange-300 transition-colors">
+              <button className="w-10 h-10 rounded-full! bg-yellow-400 flex items-center justify-center shadow-md active:opacity-90 transition-opacity">
                 <IonIcon 
                   icon={notificationsOutline} 
-                  className="text-yellow-600 text-xl"
+                  className="text-white text-xl"
                   style={{ fontSize: '20px' }}
                 />
               </button>
-              {/* Notification badge */}
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-purple-600 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
-                1
-              </span>
-            </div>
-
-            {/* Profile picture */}
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300">
-              {userProfile?.picture ? (
-                <img 
-                  src={userProfile.picture} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-blue-600 font-semibold text-sm">
-                    {displayName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
+              <span className="absolute -top-1 -right-1 align-text-top w-4 h-4 bg-red-500 rounded-full shadow-sm font-sm text-white" ></span>
             </div>
           </div>
         </div>
