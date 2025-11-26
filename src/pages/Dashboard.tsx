@@ -5,6 +5,8 @@ import { authService, UserProfile } from '../services/authService';
 import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
 import IncomeExpenseDonuts from '../components/IncomeExpenseDonuts';
+import ReviewList from '../components/ReviewsList';
+import ActivityList from '../components/ActivityList';
 
 const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -96,6 +98,18 @@ const Dashboard: React.FC = () => {
           {/* Profile charts */}
           <div className="mb-4">
             <IncomeExpenseDonuts />
+          </div>
+
+          <div className="mb-5">
+            <ReviewList />
+          </div>
+
+          <div className="mb-5">
+            <ActivityList title='Recent transactions' />
+          </div>
+          
+          <div className="mb-5">
+            <ActivityList title='Upcoming transactions' />
           </div>
 
           {/* Rest of the dashboard content will go here */}

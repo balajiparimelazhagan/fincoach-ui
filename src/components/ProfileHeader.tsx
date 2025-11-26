@@ -30,7 +30,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userProfile }) => {
               <img
                 src={userProfile?.picture ?? '/default-profile-pic.png'}
                 alt="Profile"
-                className="w-[90%] h-[90%] object-cover mx-auto my-auto"
+                className="w-full h-full object-cover mx-auto my-auto"
                 onError={(e) => { (e.target as HTMLImageElement).src = '/default-profile-pic.png'; }}
               />
             </div>
