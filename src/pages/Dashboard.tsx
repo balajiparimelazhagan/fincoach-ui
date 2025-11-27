@@ -2,6 +2,7 @@ import { IonContent, IonPage, IonSpinner, IonText } from '@ionic/react';
 import { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { authService, UserProfile } from '../services/authService';
+import { transactionService } from '../services/transactionService';
 import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
 import IncomeExpenseDonuts from '../components/IncomeExpenseDonuts';
@@ -12,6 +13,7 @@ const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [incomeExpenseData, setIncomeExpenseData] = useState<{ income: number; expense: number } | null>(null);
   const history = useHistory();
   const location = useLocation();
 
@@ -43,6 +45,13 @@ const Dashboard: React.FC = () => {
         try {
           const profile = await authService.getUserProfile();
           setUserProfile(profile);
+
+          try {
+            const data = await transactionService.getCurrentMonthTotals(profile.id);
+            setIncomeExpenseData(data);
+          } catch (err: any) {
+            console.error('Failed to fetch transaction data:', err);
+          }
         } catch (err: any) {
           console.error('Failed to fetch user profile:', err);
           // If profile fetch fails, user might still be authenticated
@@ -97,7 +106,10 @@ const Dashboard: React.FC = () => {
         <div className="p-5 pb-24">
           {/* Profile charts */}
           <div className="mb-4">
-            <IncomeExpenseDonuts />
+            <IncomeExpenseDonuts 
+              income={incomeExpenseData?.income} 
+              expense={incomeExpenseData?.expense} 
+            />
           </div>
 
           <div className="mb-5">

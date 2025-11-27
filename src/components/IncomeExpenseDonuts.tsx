@@ -2,13 +2,39 @@ import React from 'react';
 import ReactECharts from 'echarts-for-react';
 
 interface DonutDataProps {
-  income?: number; // positive
-  expenses?: number; // negative
+  income?: number; // Income amount
+  expense?: number; // Expense amount
 }
 
-const DonutChart: React.FC<{ value: number; color: string; label: string; startAngle?: number; clockwise?: boolean }> = ({ value, color, label, startAngle = 210, clockwise = true }) => {
-  const positiveValue = Math.min(100, Math.abs(value));
-  const remainder = Math.max(0, 100 - positiveValue);
+const DonutChart: React.FC<{ 
+  amount: number; 
+  percentage: number; 
+  color: string; 
+  label: string; 
+  startAngle?: number; 
+  clockwise?: boolean;
+  isIncome?: boolean;
+}> = ({ amount, percentage, color, label, startAngle = 90, clockwise = true, isIncome = true }) => {
+  const displayPercentage = Math.min(100, Math.max(0, Math.round(percentage)));
+  const remainder = Math.max(0, 100 - displayPercentage);
+
+  // Format amount with currency symbol (you can make this dynamic based on user's currency)
+  const formattedAmount = (() => {
+    if (amount >= 10_000 && amount < 99_999) {
+      return `${(amount / 1_000).toFixed(2)}K`;
+    }
+    if (amount >= 1_00_000 && amount < 1_00_00_000) {
+      return `${(amount / 1_00_000).toFixed(2)}L`;
+    }
+    if (amount >= 1_00_00_000) {
+      return `${(amount / 1_00_00_000).toFixed(2)}Cr`;
+    }
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  })();
 
   const option = {
     series: [
@@ -23,17 +49,17 @@ const DonutChart: React.FC<{ value: number; color: string; label: string; startA
         label: {
           show: true,
           position: 'center',
-          formatter: `${value >= 0 ? '+' : '-'}${positiveValue}`,
+          formatter: `${isIncome ? '+' : '-'}${formattedAmount}`,
           fontSize: 16,
           fontWeight: 700,
-          color: value >= 0 ? '#16a34a' : '#ef4444'
+          color: isIncome ? '#16a34a' : '#ef4444'
         },
         itemStyle: {
           borderWidth: 0,
           borderRadius: 12
         },
         data: [
-          { value: positiveValue, itemStyle: { color } },
+          { value: displayPercentage, itemStyle: { color } },
           { value: remainder, itemStyle: { color: '#e6e6e6' } }
         ]
       }
@@ -47,17 +73,38 @@ const DonutChart: React.FC<{ value: number; color: string; label: string; startA
       </div>
       <div className="text-center py-1">
         <div className="text-sm font-semibold text-gray-700">{label}</div>
+        <div className="text-xs text-gray-500">{formattedAmount}</div>
       </div>
     </div>
   );
 };
 
-const IncomeExpenseDonuts: React.FC<DonutDataProps> = ({ income = 25, expenses = -20 }) => {
+const IncomeExpenseDonuts: React.FC<DonutDataProps> = ({ income = 0, expense = 0 }) => {
+  const total = income + expense;
+  const incomePercentage = total > 0 ? (income / total) * 100 : 0;
+  const expensePercentage = total > 0 ? (expense / total) * 100 : 0;
+
   return (
     <div className="bg-white rounded-xl px-5 pt-2 border border-gray-200">
       <div className="flex gap-2 justify-center items-center">
-        <DonutChart value={income} color="#34d399" label="Income" startAngle={90} clockwise={true} />
-        <DonutChart value={expenses} color="#f43f5e" label="Expenses" startAngle={90} clockwise={true} />
+        <DonutChart 
+          amount={income} 
+          percentage={incomePercentage} 
+          color="#34d399" 
+          label="Income" 
+          startAngle={90} 
+          clockwise={true}
+          isIncome={true}
+        />
+        <DonutChart 
+          amount={expense} 
+          percentage={expensePercentage} 
+          color="#f43f5e" 
+          label="Expenses" 
+          startAngle={90} 
+          clockwise={true}
+          isIncome={false}
+        />
       </div>
     </div>
   );
