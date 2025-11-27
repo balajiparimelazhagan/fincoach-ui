@@ -2,7 +2,7 @@ import { IonContent, IonPage, IonSpinner, IonText } from '@ionic/react';
 import { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { authService, UserProfile } from '../services/authService';
-import { transactionService } from '../services/transactionService';
+import { transactionService, Transaction } from '../services/transactionService';
 import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
 import IncomeExpenseDonuts from '../components/IncomeExpenseDonuts';
@@ -14,6 +14,9 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [incomeExpenseData, setIncomeExpenseData] = useState<{ income: number; expense: number } | null>(null);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [upcomingTransactions, setUpcomingTransactions] = useState<Transaction[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(true);
   const history = useHistory();
   const location = useLocation();
 
@@ -51,6 +54,20 @@ const Dashboard: React.FC = () => {
             setIncomeExpenseData(data);
           } catch (err: any) {
             console.error('Failed to fetch transaction data:', err);
+          }
+
+          // Fetch recent and upcoming transactions
+          try {
+            const [recent, upcoming] = await Promise.all([
+              transactionService.getRecentTransactions(profile.id, 10),
+              transactionService.getUpcomingTransactions(profile.id, 10),
+            ]);
+            setRecentTransactions(recent);
+            setUpcomingTransactions(upcoming);
+          } catch (err: any) {
+            console.error('Failed to fetch transactions list:', err);
+          } finally {
+            setTransactionsLoading(false);
           }
         } catch (err: any) {
           console.error('Failed to fetch user profile:', err);
@@ -117,11 +134,19 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="mb-5">
-            <ActivityList title='Recent transactions' />
+            <ActivityList 
+              title='Recent transactions' 
+              transactions={recentTransactions}
+              isLoading={transactionsLoading}
+            />
           </div>
           
           <div className="mb-5">
-            <ActivityList title='Upcoming transactions' />
+            <ActivityList 
+              title='Upcoming transactions' 
+              transactions={upcomingTransactions}
+              isLoading={transactionsLoading}
+            />
           </div>
 
           {/* Rest of the dashboard content will go here */}

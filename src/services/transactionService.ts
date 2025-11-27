@@ -123,6 +123,46 @@ class TransactionService {
 
         return this.getIncomeExpenseTotals(userId, dateFrom, dateTo);
     }
+
+  /**
+   * Gets recent transactions (past transactions up to today)
+   * @param userId - User ID
+   * @param limit - Maximum number of transactions to return
+   * @returns Promise with recent transactions
+   */
+  async getRecentTransactions(userId: string, limit: number = 10): Promise<Transaction[]> {
+    const now = new Date();
+    const dateTo = now.toISOString().split('T')[0];
+    
+    const response = await this.getTransactions({
+      user_id: userId,
+      date_to: dateTo,
+      limit,
+    });
+
+    return response.items;
+  }
+
+  /**
+   * Gets upcoming transactions (future transactions from today onwards)
+   * @param userId - User ID
+   * @param limit - Maximum number of transactions to return
+   * @returns Promise with upcoming transactions
+   */
+  async getUpcomingTransactions(userId: string, limit: number = 10): Promise<Transaction[]> {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateFrom = tomorrow.toISOString().split('T')[0];
+    
+    const response = await this.getTransactions({
+      user_id: userId,
+      date_from: dateFrom,
+      limit,
+    });
+
+    return response.items;
+  }
 }
 
 // Export a singleton instance

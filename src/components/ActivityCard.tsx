@@ -14,7 +14,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ avatarUrl, title, date, amo
   const amountFormatted = (amt: number) => {
     const sign = amt >= 0 ? '+' : '-';
     const abs = Math.abs(amt);
-    return `${sign}${abs.toLocaleString()}`;
+    return `${sign}₹${abs.toLocaleString()}`;
   };
 
   return (
@@ -28,7 +28,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ avatarUrl, title, date, amo
       </div>
 
       <div className="flex-1 flex flex-col">
-        <div className="font-medium text-xs text-gray-800 truncate">{title}</div>
+        <div className="font-medium text-xs text-gray-800 truncate">{title.length > 8 ? title.slice(0, 8) + '...' : title}</div>
         {date && <div className="text-xs text-gray-400">{date}</div>}
       </div>
 
