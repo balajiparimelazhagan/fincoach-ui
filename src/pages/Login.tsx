@@ -27,34 +27,32 @@ const Login: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen className="bg-gray-100">
-        <div className="flex flex-col items-center justify-center h-screen px-5">
+        <div className="flex flex-col items-center justify-center h-screen px-1">
           <IonButton
             expand="block"
             size="large"
-            className="w-full max-w-[300px] font-medium normal-case"
+            className="w-auto font-medium normal-case rounded-xl border-2 shadow-white overflow-hidden border-text-secondary"
             style={{
-              '--background': '#ffffff',
-              '--color': '#3c4043',
-              '--border-radius': '8px',
-              '--box-shadow': '0 2px 4px rgba(0, 0, 0, 0.1)'
+              '--background': '#FFF5F5',
+              '--color': '#8A4A64'
             } as React.CSSProperties}
             onClick={handleGoogleSignIn}
             disabled={isLoading}
           >
             {isLoading ? (
-              <>
-                <IonSpinner name="crescent" slot="start" className="mx-2" />
+              <div className='text-sm flex items-center font-bold'>
+                <IonSpinner name="bubbles" slot="start" className="mx-2" />
                 Connecting...
-              </>
+              </div>
             ) : (
-              <>
-                <IonIcon icon={logoGoogle} slot="start" className="mx-2" />
+              <div className='text-sm flex items-center font-bold'>
+                <IonIcon icon={logoGoogle} className="mx-2 text-xl py-0.5" />
                 Sign in with Google
-              </>
+              </div>
             )}
           </IonButton>
           {error && (
-            <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded max-w-[300px] w-full text-sm">
+            <div className="w-auto mt-2 p-1.5 px-3 bg-red-100 border border-red-400 text-red-700 rounded max-w-[300px] text-sm">
               {error}
             </div>
           )}

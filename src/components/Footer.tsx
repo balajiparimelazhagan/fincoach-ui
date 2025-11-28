@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
-    <div className="fixed bottom-3 left-0 right-0 z-50 bg-gray-50 rounded-t-3xl shadow-top shadow-gray-200 pb-safe">
+    <div className="fixed bottom-0 pb-1 left-0 right-0 z-50 bg-gray-50 rounded-t-3xl shadow-top shadow-gray-200 pb-safe">
       <div className="flex items-center justify-around px-2 py-3">
         {/* Home */}
         <button className="flex flex-col items-center gap-1 flex-1">
@@ -30,13 +30,6 @@ const Footer: React.FC = () => {
           <span className="text-xs text-gray-700">Budget</span>
         </Link>
 
-        {/* Central Add Button */}
-        <button className="w-14 h-14 rounded-full! bg-orange-200 flex items-center justify-center shadow-md -mt-12 active:bg-orange-300 transition-colors">
-          <IonIcon 
-            icon={add} 
-            className="text-black text-3xl"
-          />
-        </button>
 
         {/* Calendar */}
         <button className="flex flex-col items-center gap-1 flex-1">

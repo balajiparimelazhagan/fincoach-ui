@@ -9,6 +9,19 @@ interface ActivityListProps {
 }
 
 const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], isLoading = false }) => {
+  const [filter, setFilter] = React.useState('transactions');
+
+  // Filter transactions based on selected filter
+  const filteredTransactions = React.useMemo(() => {
+    if (filter === 'transactions') return transactions;
+    
+    return transactions.filter(t => {
+      if (filter === 'incomes') return t.type === 'income';
+      if (filter === 'expenses') return t.type === 'expense';
+      if (filter === 'savings') return t.type === 'income'; // You can adjust this logic
+      return true;
+    });
+  }, [transactions, filter]);
   // Format date to show "17 Nov" format
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -34,7 +47,7 @@ const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], i
     return (
       <div className="mt-5">
         <div className="mb-3 px-1">
-          <span className="text-sm font-semibold text-gray-800">{title}</span>
+          <span className="text font-semibold text-gray-800">{title} transactions</span>
         </div>
         <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-100">
           <span className="text-sm text-gray-400">Loading...</span>
@@ -43,13 +56,23 @@ const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], i
     );
   }
 
-  if (!transactions || transactions.length === 0) {
+  if (!filteredTransactions || filteredTransactions.length === 0) {
     return (
       <div className="mt-5">
         <div className="mb-3 px-1">
-          <span className="text-sm font-semibold text-gray-800">{title}</span>
+          <span className="text font-semibold text-gray-800">{title}</span>
+          <select 
+          value={filter} 
+          onChange={(e) => setFilter(e.target.value)}
+          className="text-xs text-primary! border-0 bg-transparent font-semibold! underline-offset-3 underline focus:outline-none focus:ring-0 focus:border-transparent"
+        >
+          <option value="transactions">transactions</option>
+          <option value="savings">savings</option>
+          <option value="incomes">incomes</option>
+          <option value="expenses">expenses</option>
+        </select>
         </div>
-        <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-100">
+        <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-200">
           <span className="text-sm text-gray-400">No transactions found</span>
         </div>
       </div>
@@ -59,11 +82,21 @@ const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], i
   return (
     <div className="mt-5">
       <div className="mb-3 px-1">
-        <span className="text-sm font-semibold text-gray-800">{title}</span>
+        <span className="text font-semibold text-gray-800">{title}</span>
+        <select 
+          value={filter} 
+          onChange={(e) => setFilter(e.target.value)}
+          className="text-xs text-primary! border-0 bg-transparent font-semibold! underline-offset-3 underline focus:outline-none focus:ring-0 focus:border-transparent"
+        >
+          <option value="transactions">transactions</option>
+          <option value="savings">savings</option>
+          <option value="incomes">incomes</option>
+          <option value="expenses">expenses</option>
+        </select>
       </div>
 
-      <div className="flex flex-col border border-gray-100 rounded-xl overflow-hidden">
-        {transactions.map((transaction) => (
+      <div className="flex flex-col border bg-white border-gray-200 rounded-xl overflow-hidden">
+        {filteredTransactions.map((transaction) => (
           <ActivityCard
             key={transaction.id}
             title={transaction.description}

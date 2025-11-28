@@ -59,8 +59,8 @@ const Dashboard: React.FC = () => {
           // Fetch recent and upcoming transactions
           try {
             const [recent, upcoming] = await Promise.all([
-              transactionService.getRecentTransactions(profile.id, 10),
-              transactionService.getUpcomingTransactions(profile.id, 10),
+              transactionService.getRecentTransactions(profile.id, 5),
+              transactionService.getUpcomingTransactions(profile.id, 5),
             ]);
             setRecentTransactions(recent);
             setUpcomingTransactions(upcoming);
@@ -92,8 +92,8 @@ const Dashboard: React.FC = () => {
       <IonPage>
         <IonContent fullscreen className="flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <IonSpinner name="crescent" />
-            <IonText color="medium">Loading dashboard...</IonText>
+            <IonSpinner name="bubbles" />
+            <IonText color="medium">Fetching your expenses</IonText>
           </div>
         </IonContent>
       </IonPage>
@@ -119,8 +119,8 @@ const Dashboard: React.FC = () => {
     <IonPage>
       <ProfileHeader userProfile={userProfile} />
 
-      <IonContent fullscreen className="bg-gray-50">
-        <div className="p-5 pb-24">
+      <IonContent fullscreen>
+        <div className="p-5 pb-24 bg-subtle-light">
           {/* Profile charts */}
           <div className="mb-4">
             <IncomeExpenseDonuts 
@@ -135,7 +135,7 @@ const Dashboard: React.FC = () => {
 
           <div className="mb-5">
             <ActivityList 
-              title='Recent transactions' 
+              title='Recent ' 
               transactions={recentTransactions}
               isLoading={transactionsLoading}
             />
@@ -143,7 +143,7 @@ const Dashboard: React.FC = () => {
           
           <div className="mb-5">
             <ActivityList 
-              title='Upcoming transactions' 
+              title='Upcoming ' 
               transactions={upcomingTransactions}
               isLoading={transactionsLoading}
             />

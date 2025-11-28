@@ -17,10 +17,10 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ title, subtitle, amount = 0, ic
   };
 
   return (
-    <div className="w-56 min-w-56 bg-white rounded-xl p-2 border border-gray-100 flex flex-col gap-2">
+    <div className="w-full min-w-56 bg-white rounded-t-xl p-2 border border-gray-200 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-4 h-4 rounded-full bg-gray-50 flex items-center justify-center border border-gray-100">
+          <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center border border-gray-200">
             {icon ? <IonIcon icon={icon} className="text-xl text-gray-700" /> : <IonIcon icon={addOutline} className="text-gray-700" />}
           </div>
           <div className="flex flex-col gap-0.5">
@@ -29,20 +29,8 @@ const ReviewCard: React.FC<ReviewCardProps> = ({ title, subtitle, amount = 0, ic
           </div>
         </div>
 
-        <div className={`text-sm ${amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>{amountFormatted(amount)}</div>
+        <div className={`text-sm font-semibold ${amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>{amountFormatted(amount)}</div>
       </div>
-
-      {/* <div className="flex items-center gap-2 justify-between">
-        <button className="px-2 py-1 rounded-md border border-gray-200 text-xs flex items-center gap-2 bg-white hover:bg-gray-50">
-          <IonIcon icon={addOutline} className="text-gray-500 text-base" />
-          <span>Add Label</span>
-        </button>
-        <div className="flex items-center gap-2">
-          <button className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center">
-            <IonIcon icon={checkmarkDoneOutline} className="text-gray-500 text-sm" />
-          </button>
-        </div>
-      </div> */}
     </div>
   );
 };

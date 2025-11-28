@@ -67,13 +67,13 @@ const DonutChart: React.FC<{
   };
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center py-2">
+      <div className="text-sm font-semibold text-gray-700">{label}</div>
       <div className='w-32 h-32'>
         <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
       </div>
       <div className="text-center py-1">
-        <div className="text-sm font-semibold text-gray-700">{label}</div>
-        <div className="text-xs text-gray-500">{formattedAmount}</div>
+        <div className="text-xs text-primary"> <span className='font-bold'>₹{formattedAmount}</span> yet to {isIncome ? 'earn' : 'expend'}</div>
       </div>
     </div>
   );

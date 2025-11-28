@@ -18,11 +18,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userProfile }) => {
     : 'User';
 
   return (
-    <IonHeader className="ion-no-border">
+    <IonHeader className="ion-no-border rounded-b-2xl overflow-hidden border border-gray-200">
       <IonToolbar>
-        <div className="flex items-center justify-between w-full px-4 py-3 border border-gray-200 rounded-b-2xl">
+        <div className="flex items-center justify-between w-full px-4 py-3">
           {/* Profile picture */}
-          <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-400">
+          <div className="w-12 h-12 rounded-full overflow-hidden border">
             <img
               src='/default-profile-pic.png'
               alt="Profile"
@@ -37,7 +37,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userProfile }) => {
           </div>
 
           {/* Right side - Notification bell */}
-              <button className="w-10 h-10 relative">
+              <button className="mx-1 w-10 h-10 relative">
                 <IonIcon 
                   icon={notificationsOutline} 
                   className="text-text-tertiary text-2xl p-2 rounded-full! border border-text-tertiary"
