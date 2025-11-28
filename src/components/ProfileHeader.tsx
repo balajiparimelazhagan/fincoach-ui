@@ -7,12 +7,10 @@ interface ProfileHeaderProps {
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userProfile }) => {
-  // Format user name: "Mariana S." format (first name + first letter of last name)
   const formatUserName = (name: string | null): string => {
     if (!name) return '';
     const parts = name.trim().split(' ');
-    if (parts.length === 1) return parts[0];
-    return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+    return parts[0];
   };
 
   const displayName = userProfile 
@@ -22,39 +20,30 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userProfile }) => {
   return (
     <IonHeader className="ion-no-border">
       <IonToolbar>
-        <div className="flex items-center justify-between w-full px-4 py-3">
-          {/* Left: Avatar + Name */}
-          <div className="flex items-center gap-3">
-            {/* Profile picture */}
-            <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-200 shadow-sm">
-              <img
-                src={userProfile?.picture ?? '/default-profile-pic.png'}
-                alt="Profile"
-                className="w-full h-full object-cover mx-auto my-auto"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/default-profile-pic.png'; }}
-              />
-            </div>
+        <div className="flex items-center justify-between w-full px-4 py-3 border border-gray-200 rounded-b-2xl">
+          {/* Profile picture */}
+          <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-400">
+            <img
+              src='/default-profile-pic.png'
+              alt="Profile"
+              className="w-full h-full object-cover mx-auto my-auto"
+            />
+          </div>
 
-            {/* Welcome text */}
-            <div className="flex flex-col leading-tight">
-              <span className="text-xs text-gray-400">Welcome</span>
-              <span className="text-lg font-semibold text-gray-900">{displayName}</span>
-            </div>
+          {/* Welcome text */}
+          <div className="flex flex-col leading-tight text-center">
+            <span className="text-sm text-text-secondary">Hello,</span>
+            <span className="text-lg font-black text-text-primary">{displayName}</span>
           </div>
 
           {/* Right side - Notification bell */}
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <button className="w-10 h-10 rounded-full! bg-yellow-400 flex items-center justify-center shadow-md active:opacity-90 transition-opacity">
+              <button className="w-10 h-10 relative">
                 <IonIcon 
                   icon={notificationsOutline} 
-                  className="text-white text-xl"
-                  style={{ fontSize: '20px' }}
+                  className="text-text-tertiary text-2xl p-2 rounded-full! border border-text-tertiary"
                 />
+                <span className="absolute top-2 right-1.5 w-3 h-3 bg-primary rounded-full border-2 border-white"></span>
               </button>
-              <span className="absolute -top-1 -right-1 align-text-top w-4 h-4 bg-red-500 rounded-full shadow-sm font-sm text-white" ></span>
-            </div>
-          </div>
         </div>
       </IonToolbar>
     </IonHeader>
