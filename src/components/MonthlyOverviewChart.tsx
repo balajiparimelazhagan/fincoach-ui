@@ -89,12 +89,12 @@ const MonthlyOverviewChart: React.FC = () => {
       barWidth: 12,
       // minimize gaps between categories and series
       barGap: '0%',
-      barCategoryGap: '15%',
+      barCategoryGap: '10%',
     })),
   };
 
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm mt-4">
+    <div className="bg-white rounded-xl border border-gray-200 mt-4">
       <div className="overflow-x-auto">
         <div style={{ minWidth: chartWidth }}>
           <ReactECharts option={option} style={{ width: '100%' }} />

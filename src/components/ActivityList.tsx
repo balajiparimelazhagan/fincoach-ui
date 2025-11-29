@@ -6,9 +6,10 @@ interface ActivityListProps {
   title: string;
   transactions?: Transaction[];
   isLoading?: boolean;
+  isShowingFilter?: boolean;
 }
 
-const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], isLoading = false }) => {
+const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], isLoading = false, isShowingFilter = true }) => {
   const [filter, setFilter] = React.useState('transactions');
 
   // Filter transactions based on selected filter
@@ -61,16 +62,18 @@ const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], i
       <div className="mt-5">
         <div className="mb-3 px-1">
           <span className="text font-semibold text-gray-800">{title}</span>
-          <select 
-          value={filter} 
-          onChange={(e) => setFilter(e.target.value)}
-          className="text-xs text-primary! border-0 bg-transparent font-semibold! underline-offset-3 underline focus:outline-none focus:ring-0 focus:border-transparent"
-        >
-          <option value="transactions">transactions</option>
-          <option value="savings">savings</option>
-          <option value="incomes">incomes</option>
-          <option value="expenses">expenses</option>
-        </select>
+          {isShowingFilter && (
+            <select 
+            value={filter} 
+            onChange={(e) => setFilter(e.target.value)}
+            className="text-xs text-primary! border-0 bg-transparent font-semibold! underline-offset-3 underline focus:outline-none focus:ring-0 focus:border-transparent"
+          >
+            <option value="transactions">transactions</option>
+            <option value="savings">savings</option>
+            <option value="incomes">incomes</option>
+            <option value="expenses">expenses</option>
+          </select>
+          )}
         </div>
         <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-200">
           <span className="text-sm text-gray-400">No transactions found</span>
@@ -83,16 +86,18 @@ const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], i
     <div className="mt-5">
       <div className="mb-3 px-1">
         <span className="text font-semibold text-gray-800">{title}</span>
-        <select 
-          value={filter} 
-          onChange={(e) => setFilter(e.target.value)}
-          className="text-xs text-primary! border-0 bg-transparent font-semibold! underline-offset-3 underline focus:outline-none focus:ring-0 focus:border-transparent"
-        >
-          <option value="transactions">transactions</option>
-          <option value="savings">savings</option>
-          <option value="incomes">incomes</option>
-          <option value="expenses">expenses</option>
-        </select>
+        {isShowingFilter && (
+          <select 
+            value={filter} 
+            onChange={(e) => setFilter(e.target.value)}
+            className="text-xs text-primary! border-0 bg-transparent font-semibold! underline-offset-3 underline focus:outline-none focus:ring-0 focus:border-transparent"
+          >
+            <option value="transactions">transactions</option>
+            <option value="savings">savings</option>
+            <option value="incomes">incomes</option>
+            <option value="expenses">expenses</option>
+          </select>
+        )}
       </div>
 
       <div className="flex flex-col border bg-white border-gray-200 rounded-xl overflow-hidden">
