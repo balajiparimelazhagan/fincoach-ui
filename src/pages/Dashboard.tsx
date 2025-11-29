@@ -8,6 +8,7 @@ import Footer from '../components/Footer';
 import IncomeExpenseDonuts from '../components/IncomeExpenseDonuts';
 import ReviewList from '../components/ReviewsList';
 import ActivityList from '../components/ActivityList';
+import TopPicksScroll from '../components/TopPicksScroll';
 
 const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -30,14 +31,14 @@ const Dashboard: React.FC = () => {
         if (token) {
           // Save the token
           await authService.setAccessToken(token);
-          
+
           // Remove token from URL for security
           history.replace('/dashboard');
         }
 
         // Check if user is authenticated
         const isAuthenticated = await authService.isAuthenticated();
-        
+
         if (!isAuthenticated) {
           // Redirect to login if not authenticated
           history.replace('/login');
@@ -123,9 +124,19 @@ const Dashboard: React.FC = () => {
         <div className="p-5 pb-24 bg-subtle-light">
           {/* Profile charts */}
           <div className="mb-4">
-            <IncomeExpenseDonuts 
-              income={incomeExpenseData?.income} 
-              expense={incomeExpenseData?.expense} 
+            <IncomeExpenseDonuts
+              income={incomeExpenseData?.income}
+              expense={incomeExpenseData?.expense}
+            />
+          </div>
+
+          <div className="mb-5">
+            <TopPicksScroll
+              items={[
+                { id: '1', message: 'What if I reduce my latenight cravings?' },
+                { id: '2', message: 'How much can I save this month?' },
+              ]}
+              onCardClick={(item: any) => console.log('Clicked:', item)}
             />
           </div>
 
@@ -134,16 +145,16 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="mb-5">
-            <ActivityList 
-              title='Recent ' 
+            <ActivityList
+              title='Recent '
               transactions={recentTransactions}
               isLoading={transactionsLoading}
             />
           </div>
-          
+
           <div className="mb-5">
-            <ActivityList 
-              title='Upcoming ' 
+            <ActivityList
+              title='Upcoming '
               transactions={upcomingTransactions}
               isLoading={transactionsLoading}
             />

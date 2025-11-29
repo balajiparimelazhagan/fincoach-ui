@@ -90,7 +90,7 @@ const IncomeExpenseDonuts: React.FC<DonutDataProps> = ({ income = 0, expense = 0
         <DonutChart 
           amount={income} 
           percentage={incomePercentage} 
-          color="#34d399" 
+          color="#10b981" 
           label="Income" 
           startAngle={90} 
           clockwise={true}
