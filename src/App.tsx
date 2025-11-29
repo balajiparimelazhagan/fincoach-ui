@@ -4,6 +4,7 @@ import { Route, Redirect } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
+import Portfolio from './pages/Portfolio';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -45,6 +46,7 @@ const App: React.FC = () => {
         <Route exact path="/login" component={Login} />
         <Route exact path="/dashboard" component={Dashboard} />
         <Route exact path="/transactions" component={Transactions} />
+        <Route exact path="/portfolio" component={Portfolio} />
         <Route exact path="/" render={() => <Redirect to="/login" />} />
       </IonReactRouter>
     </IonApp>

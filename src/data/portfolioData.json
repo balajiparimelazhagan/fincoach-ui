@@ -1,0 +1,95 @@
+{
+  "userEmail": "balaji@example.com",
+  "lastFetched": "21 Nov 21:52",
+  "sections": {
+    "incomes": {
+      "title": "Incomes",
+      "tag": "Tag - Incomes",
+      "items": [
+        {
+          "id": "income-1",
+          "icon": "⬆️",
+          "name": "ICICI Bank",
+          "amount": 500
+        },
+        {
+          "id": "income-2",
+          "icon": "⬆️",
+          "name": "Niyo Bank",
+          "amount": 200
+        },
+        {
+          "id": "income-3",
+          "icon": "⬆️",
+          "name": "Mom",
+          "amount": 100
+        }
+      ]
+    },
+    "savings": {
+      "title": "Savings",
+      "tag": "Tag - Savings",
+      "items": [
+        {
+          "id": "saving-1",
+          "icon": "💰",
+          "name": "Chit fund",
+          "amount": 100
+        },
+        {
+          "id": "saving-2",
+          "icon": "⬆️",
+          "name": "My fd",
+          "amount": 200
+        }
+      ]
+    },
+    "creditCards": {
+      "title": "Credit Cards",
+      "tag": "Tag - Credit Cards",
+      "items": [
+        {
+          "id": "cc-1",
+          "icon": "💳",
+          "name": "HDFC Bank",
+          "amount": 5000,
+          "dueDate": "20th"
+        },
+        {
+          "id": "cc-2",
+          "icon": "💳",
+          "name": "ICICI Coral",
+          "amount": 7500,
+          "dueDate": "25th"
+        }
+      ]
+    },
+    "bills": {
+      "title": "Bills",
+      "tag": "Tag - Bills",
+      "items": [
+        {
+          "id": "bill-1",
+          "icon": "📄",
+          "name": "Electricity",
+          "amount": 1500,
+          "dueDate": "5th"
+        },
+        {
+          "id": "bill-2",
+          "icon": "📄",
+          "name": "Internet",
+          "amount": 999,
+          "dueDate": "10th"
+        },
+        {
+          "id": "bill-3",
+          "icon": "📄",
+          "name": "Netflix",
+          "amount": 649,
+          "dueDate": "15th"
+        }
+      ]
+    }
+  }
+}

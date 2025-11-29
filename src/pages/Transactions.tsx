@@ -1,6 +1,5 @@
 import React from 'react';
-import { IonPage, IonContent, IonIcon } from '@ionic/react';
-import { chevronBackOutline, chevronForwardOutline } from 'ionicons/icons';
+import { IonPage, IonContent } from '@ionic/react';
 import Footer from '../components/Footer';
 import SummaryStats from '../components/SummaryStats';
 import MonthlyOverviewChart from '../components/MonthlyOverviewChart';
