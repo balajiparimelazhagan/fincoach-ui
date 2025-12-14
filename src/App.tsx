@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Portfolio from './pages/Portfolio';
+import { UserProvider } from './context/UserContext';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -42,13 +43,15 @@ setupIonicReact();
 const App: React.FC = () => {
   return (
     <IonApp>
-      <IonReactRouter>
-        <Route exact path="/login" component={Login} />
-        <Route exact path="/dashboard" component={Dashboard} />
-        <Route exact path="/transactions" component={Transactions} />
-        <Route exact path="/portfolio" component={Portfolio} />
-        <Route exact path="/" render={() => <Redirect to="/login" />} />
-      </IonReactRouter>
+      <UserProvider>
+        <IonReactRouter>
+          <Route exact path="/login" component={Login} />
+          <Route exact path="/dashboard" component={Dashboard} />
+          <Route exact path="/transactions" component={Transactions} />
+          <Route exact path="/portfolio" component={Portfolio} />
+          <Route exact path="/" render={() => <Redirect to="/login" />} />
+        </IonReactRouter>
+      </UserProvider>
     </IonApp>
   );
 };

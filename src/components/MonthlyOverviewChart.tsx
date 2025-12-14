@@ -27,7 +27,7 @@ const MonthlyOverviewChart: React.FC = () => {
     type: 'bar',
     stack: 'total',
     data: [30, 10, 80, 20, 60, 50, 30, 30, 10, 80, 20, 60, 50, 30, 30, 10, 80, 20, 60, 50, 30],
-    color: '#F43F5E',
+    color: '#C92449',
   };
 
   const savingSeries: SeriesPoint = {

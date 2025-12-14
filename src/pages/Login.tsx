@@ -1,7 +1,7 @@
 import { IonButton, IonContent, IonIcon, IonPage, IonSpinner } from '@ionic/react';
 import { logoGoogle } from 'ionicons/icons';
 import { useState } from 'react';
-import { authService } from '../services/authService';
+import { userService } from '../services/userService';
 
 const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,7 +12,7 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const { authorization_url } = await authService.initiateGoogleSignIn();
+      const { authorization_url } = await userService.initiateGoogleSignIn();
       
       // Redirect to Google's authorization page
       window.location.href = authorization_url;

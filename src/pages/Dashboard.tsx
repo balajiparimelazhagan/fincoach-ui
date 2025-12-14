@@ -1,7 +1,7 @@
 import { IonContent, IonPage, IonSpinner, IonText } from '@ionic/react';
 import { useEffect, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { authService, UserProfile } from '../services/authService';
+import { userService } from '../services/userService';
 import { transactionService, Transaction } from '../services/transactionService';
 import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
@@ -9,17 +9,17 @@ import IncomeExpenseDonuts from '../components/IncomeExpenseDonuts';
 import ReviewList from '../components/ReviewsList';
 import ActivityList from '../components/ActivityList';
 import TopPicksScroll from '../components/TopPicksScroll';
+import { useUser } from '../context/UserContext';
 
 const Dashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [incomeExpenseData, setIncomeExpenseData] = useState<{ income: number; expense: number } | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
-  const [upcomingTransactions, setUpcomingTransactions] = useState<Transaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const history = useHistory();
   const location = useLocation();
+  const { state: { profile, preferences, loading: userLoading } } = useUser();
 
   useEffect(() => {
     const handleTokenAndAuth = async () => {
@@ -30,14 +30,14 @@ const Dashboard: React.FC = () => {
 
         if (token) {
           // Save the token
-          await authService.setAccessToken(token);
+          await userService.setAccessToken(token);
 
           // Remove token from URL for security
           history.replace('/dashboard');
         }
 
         // Check if user is authenticated
-        const isAuthenticated = await authService.isAuthenticated();
+        const isAuthenticated = await userService.isAuthenticated();
 
         if (!isAuthenticated) {
           // Redirect to login if not authenticated
@@ -45,11 +45,9 @@ const Dashboard: React.FC = () => {
           return;
         }
 
-        // Fetch user profile
-        try {
-          const profile = await authService.getUserProfile();
-          setUserProfile(profile);
-
+        // Wait for user context to load profile and preferences
+        // Profile will be available from context
+        if (profile) {
           try {
             const data = await transactionService.getCurrentMonthTotals(profile.id);
             setIncomeExpenseData(data);
@@ -57,23 +55,17 @@ const Dashboard: React.FC = () => {
             console.error('Failed to fetch transaction data:', err);
           }
 
-          // Fetch recent and upcoming transactions
+          // Fetch transactions summary
           try {
-            const [recent, upcoming] = await Promise.all([
-              transactionService.getRecentTransactions(profile.id, 5),
-              transactionService.getUpcomingTransactions(profile.id, 5),
+            const [recent] = await Promise.all([
+              transactionService.getRecentTransactions(profile.id, 3)
             ]);
             setRecentTransactions(recent);
-            setUpcomingTransactions(upcoming);
           } catch (err: any) {
             console.error('Failed to fetch transactions list:', err);
           } finally {
             setTransactionsLoading(false);
           }
-        } catch (err: any) {
-          console.error('Failed to fetch user profile:', err);
-          // If profile fetch fails, user might still be authenticated
-          // Just show a generic welcome message
         }
 
         setIsLoading(false);
@@ -118,49 +110,50 @@ const Dashboard: React.FC = () => {
 
   return (
     <IonPage>
-      <ProfileHeader userProfile={userProfile} />
+      <ProfileHeader userProfile={profile} />
 
       <IonContent fullscreen>
         <div className="p-5 pb-24 bg-subtle-light">
-          {/* Profile charts */}
-          <div className="mb-4">
-            <IncomeExpenseDonuts
-              income={incomeExpenseData?.income}
-              expense={incomeExpenseData?.expense}
-            />
-          </div>
+          {/* Income & Expense Overview */}
+          {preferences?.dashboard?.show_income_expense && (
+            <div className="mb-5">
+              <IncomeExpenseDonuts
+                income={incomeExpenseData?.income}
+                expense={incomeExpenseData?.expense}
+              />
+            </div>
+          )}
 
-          <div className="mb-5">
-            <TopPicksScroll
-              items={[
-                { id: '1', message: 'What if I reduce my latenight cravings?' },
-                { id: '2', message: 'How much can I save this month?' },
-              ]}
-              onCardClick={(item: any) => console.log('Clicked:', item)}
-            />
-          </div>
+          {/* AI Suggestions */}
+          {preferences?.dashboard?.show_ai_suggestions && (
+            <div className="mb-5">
+              <TopPicksScroll
+                items={[
+                  { id: '1', message: 'What if I reduce my latenight cravings?' },
+                  { id: '2', message: 'How much can I save this month?' },
+                ]}
+                onCardClick={(item: any) => console.log('Clicked:', item)}
+              />
+            </div>
+          )}
 
-          <div className="mb-5">
-            <ReviewList />
-          </div>
+          {/* Budget Summary */}
+          {preferences?.dashboard?.show_budget_summary && (
+            <div className="mb-5">
+              <ReviewList />
+            </div>
+          )}
 
-          <div className="mb-5">
-            <ActivityList
-              title='Recent '
-              transactions={recentTransactions}
-              isLoading={transactionsLoading}
-            />
-          </div>
-
-          <div className="mb-5">
-            <ActivityList
-              title='Upcoming '
-              transactions={upcomingTransactions}
-              isLoading={transactionsLoading}
-            />
-          </div>
-
-          {/* Rest of the dashboard content will go here */}
+          {/* Recent Transactions */}
+          {preferences?.dashboard?.show_transaction_list && (
+            <div className="mb-5">
+              <ActivityList
+                title='Recent '
+                transactions={recentTransactions}
+                isLoading={transactionsLoading}
+              />
+            </div>
+          )}
         </div>
       </IonContent>
 

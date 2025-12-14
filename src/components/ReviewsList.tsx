@@ -32,8 +32,8 @@ const ReviewList: React.FC = () => {
   return (
     <div>
       <div className="px-1 mt-5 flex justify-between">
-        <span className="text pb-3 font-semibold text-gray-800">Add to budget ?</span>
-        <span className=" text-xs text-primary cursor-pointer pt-3 px-2 font-semibold">See all</span>
+        <span className="text pb-2 font-semibold text-gray-800">Add to budget ?</span>
+        <span className=" text-xs text-primary cursor-pointer py-1 px-2 font-semibold">See all</span>
       </div>
 
       <div className="relative w-full" style={{ height: containerHeight || 'auto' }}>

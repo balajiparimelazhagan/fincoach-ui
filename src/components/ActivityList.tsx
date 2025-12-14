@@ -9,7 +9,7 @@ interface ActivityListProps {
   isShowingFilter?: boolean;
 }
 
-const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], isLoading = false, isShowingFilter = true }) => {
+const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], isLoading = false, isShowingFilter = false }) => {
   const [filter, setFilter] = React.useState('transactions');
 
   // Filter transactions based on selected filter
@@ -84,7 +84,7 @@ const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], i
 
   return (
     <div className="mt-5">
-      <div className="mb-3 px-1">
+      <div className="mb-2 px-1">
         <span className="text font-semibold text-gray-800">{title}</span>
         {isShowingFilter && (
           <select 

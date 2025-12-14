@@ -22,7 +22,7 @@ const StatItem: React.FC<StatItemProps> = ({ label, value, icon, color = '#34D39
 const SummaryStats: React.FC = () => {
   const stats = [
     { label: 'Income', value: '37,400', color: '#34D399', icon: '↓' },
-    { label: 'Expenses', value: '16,200', color: '#F43F5E', icon: '↑' },
+    { label: 'Expenses', value: '16,200', color: '#C92449', icon: '↑' },
     { label: 'Savings', value: '56,300', color: '#8a4a64', icon: '⤓' },
   ];
   return (
