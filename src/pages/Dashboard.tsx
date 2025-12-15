@@ -148,7 +148,7 @@ const Dashboard: React.FC = () => {
           {preferences?.dashboard?.show_transaction_list && (
             <div className="mb-5">
               <ActivityList
-                title='Recent '
+                title='Recent transactions'
                 transactions={recentTransactions}
                 isLoading={transactionsLoading}
               />

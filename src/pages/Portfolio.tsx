@@ -7,14 +7,17 @@ import {
   IonToolbar,
   IonTitle,
   IonButtons,
+  IonPopover,
 } from "@ionic/react";
-import { arrowBackOutline } from "ionicons/icons";
+import { arrowBackOutline, settingsOutline } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import { authService, UserProfile } from "../services/authService";
 import portfolioData from "../data/portfolioData.json";
 import Footer from "../components/Footer";
 import ActivityCard from "../components/ActivityCard";
 import ProfileIcon from "../components/ProfileIcon";
+import { DashboardPreferencesPanel } from "../components/PreferenceToggle";
+import { useUser } from "../context/UserContext";
 
 interface PortfolioItem {
   id: string;
@@ -34,6 +37,9 @@ interface PortfolioSection {
 const Portfolio: React.FC = () => {
   const history = useHistory();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const { state: { preferences }, updateDashboardPreference } = useUser();
+  const [showPopover, setShowPopover] = useState(false);
+  const [popoverEvent, setPopoverEvent] = useState<any>(undefined);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -46,6 +52,19 @@ const Portfolio: React.FC = () => {
     };
     fetchProfile();
   }, []);
+
+  const handleSettingsClick = (e: any) => {
+    setPopoverEvent(e.nativeEvent);
+    setShowPopover(true);
+  };
+
+  const handlePreferenceChange = async (key: any, value: boolean) => {
+    try {
+      await updateDashboardPreference(key, value);
+    } catch (error) {
+      console.error('Failed to update preference:', error);
+    }
+  };
 
   const displayEmail = (userProfile?.email || portfolioData.userEmail).split(
     "@"
@@ -104,8 +123,35 @@ const Portfolio: React.FC = () => {
             </button>
           </IonButtons>
           <IonTitle className="text-center font-bold">Portfolio</IonTitle>
+          <IonButtons slot="end">
+            <button
+              onClick={handleSettingsClick}
+              className="flex items-center px-3 py-2"
+            >
+              <IonIcon
+                icon={settingsOutline}
+                className="text-2xl text-gray-700"
+              />
+            </button>
+          </IonButtons>
         </IonToolbar>
       </IonHeader>
+
+      <IonPopover
+        isOpen={showPopover}
+        event={popoverEvent}
+        onDidDismiss={() => setShowPopover(false)}
+        className="preferences-popover"
+      >
+        <div className="max-w-sm p-2">
+          {preferences && (
+            <DashboardPreferencesPanel
+              preferences={preferences.dashboard}
+              onPreferenceChange={handlePreferenceChange}
+            />
+          )}
+        </div>
+      </IonPopover>
 
       <IonContent fullscreen className="bg-gray-50">
         <div className="p-5 pb-24">

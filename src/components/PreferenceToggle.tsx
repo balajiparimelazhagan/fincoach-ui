@@ -1,10 +1,10 @@
 import React from 'react';
-import { IonToggle } from '@ionic/react';
+import { IonIcon } from '@ionic/react';
+import { eyeOutline, eyeOffOutline } from 'ionicons/icons';
 import { DashboardPreferences } from '../services/userService';
 
 interface PreferenceToggleProps {
   label: string;
-  description?: string;
   checked: boolean;
   onToggle: (checked: boolean) => void;
   disabled?: boolean;
@@ -12,7 +12,6 @@ interface PreferenceToggleProps {
 
 export const PreferenceToggle: React.FC<PreferenceToggleProps> = ({
   label,
-  description,
   checked,
   onToggle,
   disabled = false
@@ -20,16 +19,20 @@ export const PreferenceToggle: React.FC<PreferenceToggleProps> = ({
   return (
     <div className="flex items-center justify-between py-3 border-b border-gray-200">
       <div className="flex-1 pr-4">
-        <div className="font-medium text-gray-900">{label}</div>
-        {description && (
-          <div className="text-sm text-gray-500 mt-1">{description}</div>
-        )}
+        <div className="font-medium text-sm text-gray-900">{label}</div>
       </div>
-      <IonToggle
-        checked={checked}
-        onIonChange={(e) => onToggle(e.detail.checked)}
+      <button
+        onClick={() => !disabled && onToggle(!checked)}
         disabled={disabled}
-      />
+        className={`p-1 rounded-md transition-colors ${
+          disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+        }`}
+      >
+        <IonIcon
+          icon={checked ? eyeOutline : eyeOffOutline}
+          className={`text-2xl ${checked ? 'text-primary' : 'text-gray-400'}`}
+        />
+      </button>
     </div>
   );
 };
@@ -47,41 +50,35 @@ export const DashboardPreferencesPanel: React.FC<DashboardPreferencesPanelProps>
 }) => {
   const preferenceConfig = [
     {
-      key: 'show_income_expense_charts' as keyof DashboardPreferences,
-      label: 'Income & Expense Charts',
-      description: 'Show donut charts with income and expense breakdown'
+      key: 'show_income_expense' as keyof DashboardPreferences,
+      label: 'Charts',
     },
     {
       key: 'show_ai_suggestions' as keyof DashboardPreferences,
-      label: 'AI Suggestions',
-      description: 'Show AI-powered financial insights and recommendations'
+      label: 'Top Picks',
     },
     {
       key: 'show_budget_summary' as keyof DashboardPreferences,
-      label: 'Budget Summary',
-      description: 'Show your budget overview and review cards'
+      label: 'Budget review',
     },
     {
       key: 'show_transaction_list' as keyof DashboardPreferences,
       label: 'Recent Transactions',
-      description: 'Show your most recent transactions'
     },
     {
       key: 'show_category_breakdown' as keyof DashboardPreferences,
       label: 'Category Breakdown',
-      description: 'Show spending breakdown by category'
     }
   ];
 
   return (
-    <div className="bg-white rounded-xl p-4 border border-gray-200">
-      <h3 className="text-lg font-semibold mb-4">Dashboard Sections</h3>
+    <div className="bg-white rounded-lg p-2 border border-gray-200">
+      <p className="font-semibold mb-2">Dashboard</p>
       <div>
-        {preferenceConfig.map(({ key, label, description }) => (
+        {preferenceConfig.map(({ key, label }) => (
           <PreferenceToggle
             key={key}
             label={label}
-            description={description}
             checked={preferences[key]}
             onToggle={(checked) => onPreferenceChange(key, checked)}
             disabled={disabled}
