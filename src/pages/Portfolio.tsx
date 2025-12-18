@@ -144,9 +144,9 @@ const Portfolio: React.FC = () => {
         className="preferences-popover"
       >
         <div className="max-w-sm p-2">
-          {preferences && (
+          {preferences?.dashboard && (
             <DashboardPreferencesPanel
-              preferences={preferences.dashboard}
+              preferences={preferences.dashboard as any}
               onPreferenceChange={handlePreferenceChange}
             />
           )}

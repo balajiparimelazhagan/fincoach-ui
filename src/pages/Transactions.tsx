@@ -6,14 +6,61 @@ import MonthlyOverviewChart from '../components/MonthlyOverviewChart';
 import CalendarMonthView from '../components/CalendarMonthView';
 import HeaderNavItem from '../components/HeaderNavItem';
 import ActivityList from '../components/ActivityList';
+import CardCarousel, { Card } from '../components/CardCarousel';
 
 const Transactions: React.FC = () => {
+  const cards: Card[] = [
+    {
+      id: '1',
+      type: 'debit',
+      balance: 4529.53,
+      title: 'IndusInd Zinger Multi Wallet Card',
+      bankName: 'IndusInd Bank',
+      lastFourDigits: '8926',
+      referenceNumber: '000046207703',
+      cardBrand: 'visa',
+      income: 37400,
+      expense: 16200,
+      savings: 21200,
+    },
+    {
+      id: '2',
+      type: 'debit',
+      balance: 12500.00,
+      title: 'HDFC Salary Account',
+      bankName: 'HDFC Bank',
+      lastFourDigits: '4532',
+      referenceNumber: '000012345678',
+      cardBrand: 'visa',
+      income: 50000,
+      expense: 28500,
+      savings: 21500,
+    },
+    {
+      id: '3',
+      type: 'credit',
+      balance: 25000.00,
+      title: 'ICICI Credit Card',
+      bankName: 'ICICI Bank',
+      lastFourDigits: '7890',
+      referenceNumber: '000098765432',
+      cardBrand: 'visa',
+      income: 0,
+      expense: 15600,
+      savings: 9400,
+    },
+  ];
+
   return (
     <IonPage>
       <IonContent fullscreen>
-        <div className="p-5 pb-24 bg-subtle-light">
+        <div className="p-5 pb-24 space-y-4 bg-subtle-light">
 
           <HeaderNavItem title="2025 September" />
+          
+          {/* Card Carousel */}
+          <CardCarousel cards={cards} />
+          
           <SummaryStats />
 
           {/* Monthly overview chart */}

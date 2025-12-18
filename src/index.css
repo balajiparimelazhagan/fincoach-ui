@@ -59,3 +59,26 @@
 * {
   font-family: 'Quicksand';
 }
+
+/* Card Carousel Toggle Styles */
+.card-toggle {
+  --handle-width: 16px;
+  --handle-height: 16px;
+  --handle-spacing: 0px;
+  --handle-background: #ffffff;
+  --handle-background-checked: #ffffff;
+  --background: rgba(180, 60, 150, 0.8);
+  --background-checked: #fffbf4;
+  --border-radius: 12px;
+  --handle-border-radius: 12px;
+  width: 32px;
+  height: 16px;
+}
+
+.card-toggle.toggle-checked::part(track) {
+  background: #fffbf4 !important;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
