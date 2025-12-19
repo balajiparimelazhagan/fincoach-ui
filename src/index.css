@@ -76,7 +76,7 @@
 }
 
 .card-toggle.toggle-checked::part(track) {
-  background: #fffbf4 !important;
+  background: #CBE5DE !important;
 }
 
 .scrollbar-hide::-webkit-scrollbar {

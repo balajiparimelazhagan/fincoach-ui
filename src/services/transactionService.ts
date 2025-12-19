@@ -4,18 +4,19 @@ import api from './api';
  * Transaction Response from API
  */
 export interface Transaction {
-  id: string;
+  id?: string;
   amount: number;
   transaction_id: string | null;
   type: 'income' | 'expense';
   date: string;
-  transactor_id: string;
-  category_id: string;
+  transactor_id?: string;
+  category_id?: string;
+  category: string;
   description: string;
-  confidence: string;
-  currency_id: string;
-  user_id: string;
-  message_id: string;
+  confidence?: string;
+  currency_id?: string;
+  user_id?: string;
+  message_id?: string;
 }
 
 /**

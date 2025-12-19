@@ -7,6 +7,7 @@ import CalendarMonthView from '../components/CalendarMonthView';
 import HeaderNavItem from '../components/HeaderNavItem';
 import ActivityList from '../components/ActivityList';
 import CardCarousel, { Card } from '../components/CardCarousel';
+import CategorySpend, { ICategorySpend } from '../components/CategorySpend';
 
 const Transactions: React.FC = () => {
   const cards: Card[] = [
@@ -51,6 +52,14 @@ const Transactions: React.FC = () => {
     },
   ];
 
+  const walletCategories: ICategorySpend[] = [
+    { id: '1', name: 'Telecom', amount: 0.00 },
+    { id: '2', name: 'Medicine', amount: 0.00 },
+    { id: '3', name: 'Rewards', amount: 0.00 },
+    { id: '4', name: 'Food', amount: 0.00 },
+    { id: '5', name: 'Entertainment', amount: 0.00 },
+  ];
+
   return (
     <IonPage>
       <IonContent fullscreen>
@@ -62,6 +71,9 @@ const Transactions: React.FC = () => {
           <CardCarousel cards={cards} />
           
           <SummaryStats />
+          
+          {/* Category Wallets */}
+          <CategorySpend categories={walletCategories} />
 
           {/* Monthly overview chart */}
           <div className="relative">
@@ -77,9 +89,9 @@ const Transactions: React.FC = () => {
               title='25 November'
               isShowingFilter={false}
               transactions={[
-              { id: '1', date: '2024-11-25', description: 'Grocery Store', amount: -85.50, category: 'Food' },
-              { id: '2', date: '2024-11-25', description: 'Gas Station', amount: -45.00, category: 'Transportation' },
-              { id: '3', date: '2024-11-25', description: 'Outing', amount: 3200.00, category: 'Income' },
+              { transaction_id: '1', type: 'expense', date: '2024-11-25', description: 'Grocery Store', amount: -85.50, category: 'Grocery'},
+              { transaction_id: '2', type: 'expense', date: '2024-11-25', description: 'Gas Station', amount: -45.00, category: 'Gas'},
+              { transaction_id: '3', type: 'income', date: '2024-11-25', description: 'Outing', amount: 3200.00, category: 'Income'},
               ]}
               isLoading={false}
             />
@@ -89,8 +101,8 @@ const Transactions: React.FC = () => {
               title='23 November'
               isShowingFilter={false}
               transactions={[
-              { id: '1', date: '2024-11-23', description: 'Netflix', amount: -640.50, category: 'Entertainment' },
-              { id: '2', date: '2024-11-23', description: 'Rent', amount: -15000.00, category: 'Transportation' },
+              { transaction_id: '4', type: 'expense', date: '2024-11-23', description: 'Netflix', amount: -640.50, category: 'Subscription'},
+              { transaction_id: '5', type: 'expense', date: '2024-11-23', description: 'Rent', amount: -15000.00, category: 'Rent'},
               ]}
               isLoading={false}
             />

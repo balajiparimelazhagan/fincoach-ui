@@ -1,6 +1,7 @@
 import React from 'react';
 import { IonIcon } from '@ionic/react';
 import { personCircleOutline, arrowUpOutline, cardOutline, receiptOutline, walletOutline } from 'ionicons/icons';
+import { getCategoryIcon } from '../utils/categoryIconMap';
 
 interface ActivityCardProps {
   avatarUrl?: string;
@@ -104,7 +105,15 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ avatarUrl, title, date, amo
       return <IonIcon icon={personCircleOutline} className="text-xl text-gray-600" />;
     }
 
-    // Category-based fallback
+    // Category-based fallback using mapping
+    if (category) {
+      const iconSrc = getCategoryIcon(category);
+      if (iconSrc) {
+        return <IonIcon icon={iconSrc} className="text-xl text-gray-700" />;
+      }
+    }
+
+    // Income/Expense fallback
     if (categoryLower.includes('income')) {
       return <IonIcon icon={arrowUpOutline} className="text-xl text-green-500" />;
     } else if (categoryLower.includes('bill') || categoryLower.includes('expense')) {
