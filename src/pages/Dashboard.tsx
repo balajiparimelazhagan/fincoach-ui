@@ -9,6 +9,7 @@ import IncomeExpenseDonuts from '../components/IncomeExpenseDonuts';
 import ReviewList from '../components/ReviewsList';
 import ActivityList from '../components/ActivityList';
 import TopPicksScroll from '../components/TopPicksScroll';
+import Bills from '../components/Bills';
 import { useUser } from '../context/UserContext';
 
 const Dashboard: React.FC = () => {
@@ -20,6 +21,15 @@ const Dashboard: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
   const { state: { profile, preferences, loading: userLoading } } = useUser();
+
+  // Mock bills data - replace with API call later
+  const mockBills = [
+    { id: '1', name: 'Electricity', amount: 1250.00 },
+    { id: '2', name: 'Internet', amount: 899.00 },
+    { id: '3', name: 'Gas', amount: 650.00 },
+    { id: '4', name: 'Water', amount: 450.00 },
+    { id: '5', name: 'Mobile', amount: 399.00 },
+  ];
 
   useEffect(() => {
     const handleTokenAndAuth = async () => {
@@ -136,6 +146,14 @@ const Dashboard: React.FC = () => {
               />
             </div>
           )}
+
+          {/* Bills */}
+          <div className="mb-5">
+            <div className="mb-2 px-1">
+              <span className="text-sm font-semibold text-gray-800">Bills</span>
+            </div>
+            <Bills bills={mockBills} />
+          </div>
 
           {/* Budget Summary */}
           {preferences?.dashboard?.show_budget_summary && (
