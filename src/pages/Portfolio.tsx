@@ -156,11 +156,8 @@ const Portfolio: React.FC = () => {
       <IonContent fullscreen className="bg-gray-50">
         <div className="p-5 pb-24">
           {/* User Info Card */}
-          <div className="bg-linear-to-r from-primary to-primary-light rounded-2xl p-5 mb-6 shadow-md">
+          <div className="bg-primary rounded-2xl p-5 mb-6 shadow-md">
             <div className="flex items-center gap-3 mb-3">
-              {/* <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-2xl">👤</span>
-              </div> */}
               <ProfileIcon />
               <span className="text-white text-lg font-bold">
                 {displayEmail}

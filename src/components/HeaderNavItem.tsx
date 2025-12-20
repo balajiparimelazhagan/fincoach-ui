@@ -8,7 +8,7 @@ interface HeaderNavItemProps {
 
 const HeaderNavItem: React.FC<HeaderNavItemProps> = ({ title }) => {
   return (
-    <div className="bg-subtle-light flex items-center justify-center gap-12">
+    <div className="flex items-center justify-center gap-12">
         <button className="text-gray-400 p-1">
             <IonIcon icon={chevronBackOutline} className="text-xl" />
         </button>

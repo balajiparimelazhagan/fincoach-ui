@@ -2,7 +2,8 @@
 
 /* Custom color palette */
 @theme {
-  --color-primary: #8a4a64;
+  --color-primary: #093A6B;
+  /* --color-primary: #8a4a64; */
   --color-primary-light: #a85e7a;
   --color-primary-dark: #6d3a50;
   --color-subtle-light: #fffbf4;

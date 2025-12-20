@@ -113,7 +113,7 @@ const Dashboard: React.FC = () => {
       <ProfileHeader userProfile={profile} />
 
       <IonContent fullscreen>
-        <div className="p-5 pb-24 bg-subtle-light">
+        <div className="p-5 pb-24 bg-gray-100">
           {/* Income & Expense Overview */}
           {preferences?.dashboard?.show_income_expense && (
             <div className="mb-5">

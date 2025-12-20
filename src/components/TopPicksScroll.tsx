@@ -19,7 +19,7 @@ const TopPicksScroll: React.FC<TopPicksScrollProps> = ({ items, onCardClick }) =
         <div
           key={item.id}
           onClick={() => onCardClick?.(item)}
-          className="w-32 h-32 bg-primary-light rounded-2xl border border-gray-200 p-4 flex flex-col justify-between cursor-pointer hover:shadow-md transition-shadow"
+          className="w-32 h-32 bg-primary rounded-2xl border border-gray-200 p-4 flex flex-col justify-between cursor-pointer hover:shadow-md transition-shadow"
         >
           <div className="text-sm  font-semibold text-subtle-light">
               {item.message}

@@ -63,7 +63,7 @@ const Transactions: React.FC = () => {
   return (
     <IonPage>
       <IonContent fullscreen>
-        <div className="p-5 pb-24 space-y-4 bg-subtle-light">
+        <div className="p-5 pb-24 space-y-4 bg-gray-100">
 
           <HeaderNavItem title="2025 September" />
           
