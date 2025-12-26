@@ -43,6 +43,8 @@ const ReviewList: React.FC = () => {
             ref={index === 0 ? cardRef : null}
             className="absolute w-full transition-all duration-300"
             style={{
+              width: `calc(100% - ${index * 10}px)`,
+              left: `${index * 5}px`,
               bottom: `${index * stackOffset}px`,
               zIndex: sampleData.length - index,
             }}
