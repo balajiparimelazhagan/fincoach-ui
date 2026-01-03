@@ -9,7 +9,7 @@ import TransactionList from '../components/TransactionList';
 import CardCarousel, { Card } from '../components/CardCarousel';
 import CategorySpend, { ICategorySpend } from '../components/CategorySpend';
 
-const Transactions: React.FC = () => {
+const Insights: React.FC = () => {
   const cards: Card[] = [
     {
       id: '1',
@@ -69,19 +69,44 @@ const Transactions: React.FC = () => {
           
           {/* Card Carousel */}
           <CardCarousel cards={cards} />
+          
+          <SummaryStats />
+          
+          {/* Category Wallets */}
+          <CategorySpend categories={walletCategories} />
 
+          {/* Monthly overview chart */}
+          <div className="relative">
+            <span className="absolute top-2 left-3 pl-1 text-primary font-semibold"> This month</span>
+              <MonthlyOverviewChart />
+
+            {/* Monthly overview and calendar */}
+            {/* <CalendarMonthView /> */}
+            {/* Transactions content placeholder - List of transactions will go here */}
+          </div>
             <div className="mb-5">
-              <TransactionList
-                title='25 November'
-                isShowingFilter={false}
-                transactions={[
-                { transaction_id: '1', type: 'expense', date: '2024-11-25', description: 'Grocery Store', amount: -85.50, category: 'Grocery'},
-                { transaction_id: '2', type: 'expense', date: '2024-11-25', description: 'Gas Station', amount: -45.00, category: 'Gas'},
-                { transaction_id: '3', type: 'income', date: '2024-11-25', description: 'Outing', amount: 3200.00, category: 'Income'},
-                ]}
-                isLoading={false}
-              />
+            <TransactionList
+              title='25 November'
+              isShowingFilter={false}
+              transactions={[
+              { transaction_id: '1', type: 'expense', date: '2024-11-25', description: 'Grocery Store', amount: -85.50, category: 'Grocery'},
+              { transaction_id: '2', type: 'expense', date: '2024-11-25', description: 'Gas Station', amount: -45.00, category: 'Gas'},
+              { transaction_id: '3', type: 'income', date: '2024-11-25', description: 'Outing', amount: 3200.00, category: 'Income'},
+              ]}
+              isLoading={false}
+            />
             </div>
+          <div className="mb-5">
+            <TransactionList
+              title='23 November'
+              isShowingFilter={false}
+              transactions={[
+              { transaction_id: '4', type: 'expense', date: '2024-11-23', description: 'Netflix', amount: -640.50, category: 'Subscription'},
+              { transaction_id: '5', type: 'expense', date: '2024-11-23', description: 'Rent', amount: -15000.00, category: 'Rent'},
+              ]}
+              isLoading={false}
+            />
+          </div>
         </div>
       </IonContent>
 
@@ -90,4 +115,4 @@ const Transactions: React.FC = () => {
   );
 };
 
-export default Transactions;
+export default Insights;

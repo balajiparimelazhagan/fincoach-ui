@@ -37,6 +37,7 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
+import Insights from './pages/Insights';
 
 setupIonicReact();
 
@@ -48,6 +49,7 @@ const App: React.FC = () => {
           <Route exact path="/login" component={Login} />
           <Route exact path="/dashboard" component={Dashboard} />
           <Route exact path="/transactions" component={Transactions} />
+          <Route exact path="/insights" component={Insights} />
           <Route exact path="/portfolio" component={Portfolio} />
           <Route exact path="/" render={() => <Redirect to="/login" />} />
         </IonReactRouter>

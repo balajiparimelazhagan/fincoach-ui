@@ -3,7 +3,7 @@ import { IonIcon } from '@ionic/react';
 import { personCircleOutline, arrowUpOutline, cardOutline, receiptOutline, walletOutline } from 'ionicons/icons';
 import { getCategoryIcon } from '../utils/categoryIconMap';
 
-interface ActivityCardProps {
+interface TransactionCardProps {
   avatarUrl?: string;
   title: string;
   date?: string;
@@ -13,7 +13,7 @@ interface ActivityCardProps {
   category?: string; // category for determining icon
 }
 
-const ActivityCard: React.FC<ActivityCardProps> = ({ avatarUrl, title, date, amount = 0, fee, customIcon, category }) => {
+const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, date, amount = 0, fee, customIcon, category }) => {
   const amountFormatted = (amt: number) => {
     const sign = amt >= 0 ? '+' : '-';
     const abs = Math.abs(amt);
@@ -105,4 +105,4 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ avatarUrl, title, date, amo
   );
 };
 
-export default ActivityCard;
+export default TransactionCard;

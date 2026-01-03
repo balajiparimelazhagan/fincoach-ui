@@ -1,10 +1,8 @@
 import { IonIcon } from '@ionic/react';
 import { 
-  homeOutline, 
-  barChartOutline, 
-  add, 
-  calendarOutline, 
-  alertCircleOutline 
+  pieChartOutline, 
+  calendarNumberOutline, 
+  cashOutline,
 } from 'ionicons/icons';
 import { Link } from 'react-router-dom';
 
@@ -21,30 +19,30 @@ const Footer: React.FC = () => {
           />
         </Link>
 
-        {/* Budget */}
-        <Link to="/transactions" className="flex flex-col items-center gap-1 flex-1">
+        {/* Transactions */}
+        <Link to="/transactions" className="flex flex-col items-center gap-1 flex-1 rotate-180">
           <IonIcon 
-            icon={barChartOutline} 
+            icon={cashOutline} 
             className="text-gray-700 text-2xl"
           />
         </Link>
 
 
-        {/* Calendar */}
-        <button className="flex flex-col items-center gap-1 flex-1">
+        {/* Budget */}
+        <Link to="/budget" className="flex flex-col items-center gap-1 flex-1">
           <IonIcon 
-            icon={calendarOutline} 
+            icon={calendarNumberOutline} 
             className="text-gray-700 text-2xl"
           />
-        </button>
+        </Link>
 
-        {/* Reports */}
-        <button className="flex flex-col items-center gap-1 flex-1">
+        {/* Insights */}
+        <Link to="/insights" className="flex flex-col items-center gap-1 flex-1">
           <IonIcon 
-            icon={alertCircleOutline} 
+            icon={pieChartOutline} 
             className="text-gray-700 text-2xl"
           />
-        </button>
+        </Link>
       </div>
     </div>
   );

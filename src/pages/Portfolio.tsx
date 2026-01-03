@@ -14,7 +14,7 @@ import { useHistory } from "react-router-dom";
 import { authService, UserProfile } from "../services/authService";
 import portfolioData from "../data/portfolioData.json";
 import Footer from "../components/Footer";
-import ActivityCard from "../components/ActivityCard";
+import TransactionCard from "../components/TransactionCard";
 import ProfileIcon from "../components/ProfileIcon";
 import { DashboardPreferencesPanel } from "../components/PreferenceToggle";
 import { useUser } from "../context/UserContext";
@@ -91,7 +91,7 @@ const Portfolio: React.FC = () => {
               : section.tag;
 
             return (
-              <ActivityCard
+              <TransactionCard
                 key={item.id}
                 title={item.name}
                 date={subtitle}

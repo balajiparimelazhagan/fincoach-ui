@@ -1,15 +1,15 @@
 import React from 'react';
-import ActivityCard from './ActivityCard';
+import TransactionCard from './TransactionCard';
 import { Transaction } from '../services/transactionService';
 
-interface ActivityListProps {
+interface TransactionListProps {
   title: string;
   transactions?: Transaction[];
   isLoading?: boolean;
   isShowingFilter?: boolean;
 }
 
-const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], isLoading = false, isShowingFilter = false }) => {
+const TransactionList: React.FC<TransactionListProps> = ({ title, transactions = [], isLoading = false, isShowingFilter = false }) => {
   const [filter, setFilter] = React.useState('transactions');
 
   // Filter transactions based on selected filter
@@ -102,7 +102,7 @@ const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], i
 
       <div className="flex flex-col border bg-white border-gray-200 rounded-xl overflow-hidden">
         {filteredTransactions.map((transaction) => (
-          <ActivityCard
+          <TransactionCard
             key={transaction.id}
             title={transaction.description}
             date={formatDate(transaction.date)}
@@ -116,4 +116,4 @@ const ActivityList: React.FC<ActivityListProps> = ({ title, transactions = [], i
   );
 };
 
-export default ActivityList;
+export default TransactionList;

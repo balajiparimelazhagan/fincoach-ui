@@ -7,7 +7,7 @@ import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
 import IncomeExpenseDonuts from '../components/IncomeExpenseDonuts';
 import ReviewList from '../components/ReviewsList';
-import ActivityList from '../components/ActivityList';
+import TransactionList from '../components/TransactionList';
 import TopPicksScroll from '../components/TopPicksScroll';
 import Bills from '../components/Bills';
 import { useUser } from '../context/UserContext';
@@ -165,7 +165,7 @@ const Dashboard: React.FC = () => {
           {/* Recent Transactions */}
           {preferences?.dashboard?.show_transaction_list && (
             <div className="mb-5">
-              <ActivityList
+              <TransactionList
                 title='Recent transactions'
                 transactions={recentTransactions}
                 isLoading={transactionsLoading}

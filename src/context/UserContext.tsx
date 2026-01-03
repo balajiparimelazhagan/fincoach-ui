@@ -26,7 +26,7 @@ type UserAction =
 const initialState: UserState = {
   profile: null,
   preferences: null,
-  loading: true,
+  loading: false,
   error: null
 };
 
@@ -168,7 +168,17 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchUserData();
+    // Only fetch user data if token exists (user is authenticated)
+    const initUserData = async () => {
+      const isAuthenticated = await userService.isAuthenticated();
+      if (isAuthenticated) {
+        await fetchUserData();
+      } else {
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    };
+
+    initUserData();
   }, []);
 
   return (
