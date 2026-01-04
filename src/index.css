@@ -60,6 +60,22 @@
   font-family: 'Quicksand';
 }
 
+.ion-app {
+  max-width: 1024px !important;
+  width: 100% !important;
+}
+
+ion-page,
+ion-content,
+ion-header,
+ion-toolbar,
+ion-footer {
+  max-width: 768px !important;
+}
+
+.ion-page {
+  align-items: center !important;
+}
 /* Card Carousel Toggle Styles */
 .card-toggle {
   --handle-width: 16px;

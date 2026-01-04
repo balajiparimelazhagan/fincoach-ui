@@ -1,4 +1,4 @@
-import { IonIcon } from '@ionic/react';
+import { IonIcon, IonFooter } from '@ionic/react';
 import { 
   pieChartOutline, 
   calendarNumberOutline, 
@@ -8,8 +8,8 @@ import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
-    <div className="fixed bottom-0 pb-1 left-0 right-0 z-50 bg-gray-50 rounded-t-3xl shadow-top shadow-gray-200 pb-safe">
-      <div className="flex items-center justify-around px-2 py-3">
+    <IonFooter className="footer-container flex w-full justify-center bg-gray-50 rounded-t-3xl shadow-top shadow-gray-200 pb-safe">
+      <div className="flex w-full items-center justify-around px-2 py-3">
         {/* Home */}
         <Link to="/dashboard" className="flex flex-col items-center gap-1 flex-1">
           <img 
@@ -44,7 +44,7 @@ const Footer: React.FC = () => {
           />
         </Link>
       </div>
-    </div>
+    </IonFooter>
   );
 };
 
