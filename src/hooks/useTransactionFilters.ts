@@ -10,16 +10,18 @@ export const useTransactionFilters = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
 
   const fetchTransactions = useCallback(
-    async (dateFrom: string, dateTo: string, append: boolean = false) => {
+    async (dateFrom: string, dateTo: string, limit: number = 20, offset: number = 0, append: boolean = false) => {
       try {
         append ? setLoadingMore(true) : setIsLoading(true);
 
         const data = await transactionService.getTransactions({
           date_from: dateFrom,
           date_to: dateTo,
-          limit: 200,
+          limit,
+          offset,
         });
 
         // Group transactions by date
@@ -49,7 +51,10 @@ export const useTransactionFilters = () => {
           setGroupedTransactions(sortedGrouped);
         }
 
-        setHasMore(data.count > 0 && data.items.length > 0);
+        setTotalCount(data.count);
+        // Check if there are more items to load
+        const loadedItemsCount = append ? Object.values(groupedTransactions).flat().length + data.items.length : data.items.length;
+        setHasMore(loadedItemsCount < data.count);
       } catch (error) {
         console.error('Failed to fetch transactions:', error);
       } finally {
@@ -66,6 +71,7 @@ export const useTransactionFilters = () => {
     isLoading,
     loadingMore,
     hasMore,
+    totalCount,
     fetchTransactions,
   };
 };

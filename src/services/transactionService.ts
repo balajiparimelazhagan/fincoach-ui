@@ -84,7 +84,6 @@ class TransactionService {
   ): Promise<{ income: number; expense: number }> {
     // Fetch income transactions
     const incomeResponse = await this.getTransactions({
-      user_id: userId,
       date_from: dateFrom,
       date_to: dateTo,
       type: 'income',
@@ -93,7 +92,6 @@ class TransactionService {
 
     // Fetch expense transactions
     const expenseResponse = await this.getTransactions({
-      user_id: userId,
       date_from: dateFrom,
       date_to: dateTo,
       type: 'expense',
@@ -135,7 +133,6 @@ class TransactionService {
     const dateTo = now.toISOString().split('T')[0];
     
     const response = await this.getTransactions({
-      user_id: userId,
       date_to: dateTo,
       limit,
     });
@@ -156,7 +153,6 @@ class TransactionService {
     const dateFrom = tomorrow.toISOString().split('T')[0];
     
     const response = await this.getTransactions({
-      user_id: userId,
       date_from: dateFrom,
       limit,
     });

@@ -20,12 +20,35 @@ export const formatDateDisplay = (dateString: string): string => {
  * Date range utilities
  */
 
+export const getMonthEndDate = (date: Date): Date => {
+  /**
+   * Get the last day of the month for the given date.
+   * Handles all month variations: 28/29 (Feb), 30 (Apr/Jun/Sep/Nov), 31 (others)
+   */
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  // Get the first day of next month, then subtract 1 day
+  return new Date(year, month + 1, 0);
+};
+
 export const getMonthDateRange = (date: Date): { dateFrom: string; dateTo: string } => {
   const year = date.getFullYear();
   const month = date.getMonth();
-  const lastDay = new Date(year, month + 1, 0);
-  const dateFrom = new Date(year, month, 1).toISOString().split('T')[0];
-  const dateTo = lastDay.toISOString().split('T')[0];
+  
+  // First day of the selected month
+  const firstDay = new Date(year, month, 1);
+  const firstDayYear = firstDay.getFullYear();
+  const firstDayMonth = String(firstDay.getMonth() + 1).padStart(2, '0');
+  const firstDayDate = String(firstDay.getDate()).padStart(2, '0');
+  const dateFrom = `${firstDayYear}-${firstDayMonth}-${firstDayDate}`;
+  
+  // Last day of the selected month
+  const lastDay = getMonthEndDate(date);
+  const lastDayYear = lastDay.getFullYear();
+  const lastDayMonth = String(lastDay.getMonth() + 1).padStart(2, '0');
+  const lastDayDate = String(lastDay.getDate()).padStart(2, '0');
+  const dateTo = `${lastDayYear}-${lastDayMonth}-${lastDayDate}`;
+  
   return { dateFrom, dateTo };
 };
 

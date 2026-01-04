@@ -1,22 +1,21 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { IonPage, IonContent, IonSpinner } from '@ionic/react';
 import Footer from '../components/Footer';
 import HeaderNavItem from '../components/HeaderNavItem';
 import TransactionList from '../components/TransactionList';
-import CardCarousel from '../components/CardCarousel';
+import CardCarousel, { Card } from '../components/CardCarousel';
 import { useMonthNavigation } from '../hooks/useMonthNavigation';
 import { useTransactionFilters } from '../hooks/useTransactionFilters';
-import { formatMonthDisplay, formatDateDisplay, getNextDayBatch } from '../utils/dateUtils';
-import { MOCK_CARDS } from '../data/mockCards';
+import { useAccounts } from '../hooks/useAccounts';
+import { formatMonthDisplay, formatDateDisplay, getMonthDateRange } from '../utils/dateUtils';
 
 const Transactions: React.FC = () => {
+  const ITEMS_PER_PAGE = 20;
+  
   const {
     selectedMonth,
-    currentDayIndex,
     handlePrevMonth,
     handleNextMonth,
-    incrementDayIndex,
-    resetDayIndex,
   } = useMonthNavigation();
 
   const {
@@ -27,19 +26,45 @@ const Transactions: React.FC = () => {
     fetchTransactions,
   } = useTransactionFilters();
 
-  // Initial load: fetch first 5 days of the selected month
+  const { accounts, isLoading: accountsLoading } = useAccounts(
+    getMonthDateRange(selectedMonth).dateFrom,
+    getMonthDateRange(selectedMonth).dateTo
+  );
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // Convert accounts with stats to Card format for CardCarousel
+  const cards: Card[] = useMemo(() => {
+    return accounts.map((account) => ({
+      id: account.id,
+      type: account.type === 'credit' ? 'credit' : 'debit',
+      balance: 0, // Backend doesn't provide balance, can be added later
+      title: `${account.bank_name} Account`,
+      bankName: account.bank_name,
+      lastFourDigits: account.account_last_four,
+      referenceNumber: account.id,
+      cardBrand: 'visa' as const, // Default brand, can be customized
+      income: account.income,
+      expense: account.expense,
+      savings: account.savings,
+    }));
+  }, [accounts]);
+
+  // Initial load: fetch first page of transactions for the selected month
   useEffect(() => {
-    const { dateFrom, dateTo } = getNextDayBatch(selectedMonth, 0);
-    fetchTransactions(dateFrom, dateTo, false);
-    resetDayIndex();
-  }, [selectedMonth]);
+    const { dateFrom, dateTo } = getMonthDateRange(selectedMonth);
+    fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, 0, false);
+    setCurrentPage(0);
+  }, [selectedMonth, fetchTransactions]);
 
-
-  // Handle load more
+  // Handle load more - fetch next page with same date range
   const handleLoadMore = () => {
-    const { dateFrom, dateTo } = getNextDayBatch(selectedMonth, currentDayIndex);
-    fetchTransactions(dateFrom, dateTo, true);
-    incrementDayIndex();
+    const { dateFrom, dateTo } = getMonthDateRange(selectedMonth);
+    const nextPage = currentPage + 1;
+    const offset = nextPage * ITEMS_PER_PAGE;
+    fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, offset, true);
+    setCurrentPage(nextPage);
   };
 
   return (
@@ -54,7 +79,17 @@ const Transactions: React.FC = () => {
           />
 
           {/* Card Carousel */}
-          <CardCarousel cards={MOCK_CARDS} />
+          {accountsLoading ? (
+            <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-100">
+              <IonSpinner name="bubbles" />
+            </div>
+          ) : cards.length > 0 ? (
+            <CardCarousel cards={cards} />
+          ) : (
+            <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-200">
+              <span className="text-sm text-gray-400">No accounts found</span>
+            </div>
+          )}
 
           {/* Loading State */}
           {isLoading && (
