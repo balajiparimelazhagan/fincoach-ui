@@ -1,22 +1,54 @@
 import api from './api';
 
 /**
+ * Transactor object
+ */
+export interface Transactor {
+  id: string;
+  name: string;
+  picture?: string;
+  label?: string;
+}
+
+/**
+ * Category object
+ */
+export interface Category {
+  id: string;
+  label: string;
+  picture?: string;
+}
+
+/**
+ * Account object
+ */
+export interface Account {
+  id: string;
+  account_last_four: string;
+  bank_name: string;
+  type: 'credit' | 'savings' | 'current';
+}
+
+/**
  * Transaction Response from API
  */
 export interface Transaction {
   id?: string;
   amount: number;
   transaction_id: string | null;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'saving';
   date: string;
   transactor_id?: string;
+  transactor?: Transactor | null;
   category_id?: string;
-  category: string;
+  category?: Category | string | null;
   description: string;
   confidence?: string;
   currency_id?: string;
   user_id?: string;
   message_id?: string;
+  account_id?: string;
+  account?: Account | null;
 }
 
 /**

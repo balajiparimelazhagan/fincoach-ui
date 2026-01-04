@@ -11,9 +11,15 @@ interface TransactionCardProps {
   fee?: string | number; // small text on the right below amount
   customIcon?: string; // emoji or icon identifier
   category?: string; // category for determining icon
+  description?: string; // transaction description for tooltip
+  account?: {
+    account_last_four: string;
+    bank_name: string;
+    type: 'credit' | 'savings' | 'current';
+  };
 }
 
-const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, date, amount = 0, fee, customIcon, category }) => {
+const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, date, amount = 0, fee, customIcon, category, account }) => {
   const amountFormatted = (amt: number) => {
     const sign = amt >= 0 ? '+' : '-';
     const abs = Math.abs(amt);
@@ -77,23 +83,12 @@ const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, dat
       </div>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="font-medium text-sm text-gray-800 truncate">{title.length > 15 ? title.slice(0, 15) + '...' : title}</div>
-        {date && (
-          <div>
-            {category ? (
-              <button 
-                className="text-xs text-primary underline underline-offset-[5px] text-left w-fit hover:text-primary-dark active:opacity-70 transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                {date}
-              </button>
-            ) : (
-              <div className="text-xs text-gray-400">{date} - {fee !== undefined && fee} Hrs</div>
-            )}
+        <div className="font-semibold text-sm text-gray-800 truncate">{title.length > 15 ? title.slice(0, 15) + '...' : title}</div>
+        {account ? (
+          <div className="text-xs text-gray-500">
+            •••• {account.account_last_four}
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="flex flex-col items-end">

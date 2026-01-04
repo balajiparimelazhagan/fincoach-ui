@@ -53,8 +53,9 @@ export const useTransactionFilters = () => {
 
         setTotalCount(data.count);
         // Check if there are more items to load
-        const loadedItemsCount = append ? Object.values(groupedTransactions).flat().length + data.items.length : data.items.length;
-        setHasMore(loadedItemsCount < data.count);
+        // offset + data.items.length = total items loaded so far
+        const totalLoadedSoFar = offset + data.items.length;
+        setHasMore(totalLoadedSoFar < data.count);
       } catch (error) {
         console.error('Failed to fetch transactions:', error);
       } finally {

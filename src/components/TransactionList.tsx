@@ -69,11 +69,18 @@ const TransactionList: React.FC<TransactionListProps> = ({ title, transactions =
         {filteredTransactions.map((transaction) => (
           <TransactionCard
             key={transaction.id}
-            title={transaction.description}
+            title={transaction.transactor?.name || transaction.description || 'Unknown'}
             date={formatDate(transaction.date)}
             amount={getDisplayAmount(transaction)}
             fee={formatTime(transaction.date)}
-            avatarUrl={undefined}
+            avatarUrl={transaction.transactor?.picture}
+            category={typeof transaction.category === 'string' ? transaction.category : transaction.category?.label}
+            description={transaction.description}
+            account={transaction.account ? {
+              account_last_four: transaction.account.account_last_four,
+              bank_name: transaction.account.bank_name,
+              type: transaction.account.type,
+            } : undefined}
           />
         ))}
       </div>
