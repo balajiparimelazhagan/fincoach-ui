@@ -37,7 +37,6 @@ export interface TransactionQueryParams {
   amount_min?: number;
   amount_max?: number;
   type?: 'income' | 'expense';
-  user_id?: string;
   transactor_id?: string;
   category_id?: string;
   limit?: number;

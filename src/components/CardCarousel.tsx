@@ -67,21 +67,21 @@ const CardCarousel: React.FC<CardCarouselProps> = ({ cards }) => {
         {cards.map((card) => (
           <div
             key={card.id}
-            className="flex-shrink-0 snap-center w-full px-5"
+            className="shrink-0 flex justify-center snap-center w-full px-5"
             style={{
               scrollSnapAlign: 'center',
               scrollSnapStop: 'always',
             }}
           >
-            <div className="relative rounded-xl bg-white border-1 border-gray-200 pb-1 overflow-hidden">
+            <div className="relative rounded-xl bg-white border border-gray-200 pb-1 w-80 overflow-hidden">
               {/* Top Section: Card Title and Bank Name */}
               <div className="flex justify-between bg-primary items-center py-2 mb-3 px-2">
-                <div className="text-left flex-shrink-0">
+                <div className="text-left shrink-0">
                   <p className="text-xs text-white font-semibold whitespace-nowrap">
                     {card.bankName}
                   </p>
                 </div>
-                <div className="flex-shrink-0 mx-1">
+                <div className="shrink-0 mx-1">
                   <IonToggle className="card-toggle" />
                 </div>
               </div>

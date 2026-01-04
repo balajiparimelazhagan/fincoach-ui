@@ -1,87 +1,107 @@
-import React from 'react';
-import { IonPage, IonContent } from '@ionic/react';
+import React, { useEffect } from 'react';
+import { IonPage, IonContent, IonSpinner } from '@ionic/react';
 import Footer from '../components/Footer';
-import SummaryStats from '../components/SummaryStats';
-import MonthlyOverviewChart from '../components/MonthlyOverviewChart';
-import CalendarMonthView from '../components/CalendarMonthView';
 import HeaderNavItem from '../components/HeaderNavItem';
 import TransactionList from '../components/TransactionList';
-import CardCarousel, { Card } from '../components/CardCarousel';
-import CategorySpend, { ICategorySpend } from '../components/CategorySpend';
+import CardCarousel from '../components/CardCarousel';
+import { useMonthNavigation } from '../hooks/useMonthNavigation';
+import { useTransactionFilters } from '../hooks/useTransactionFilters';
+import { formatMonthDisplay, formatDateDisplay, getNextDayBatch } from '../utils/dateUtils';
+import { MOCK_CARDS } from '../data/mockCards';
 
 const Transactions: React.FC = () => {
-  const cards: Card[] = [
-    {
-      id: '1',
-      type: 'debit',
-      balance: 4529.53,
-      title: 'IndusInd Zinger Multi Wallet Card',
-      bankName: 'IndusInd Bank',
-      lastFourDigits: '8926',
-      referenceNumber: '000046207703',
-      cardBrand: 'visa',
-      income: 37400,
-      expense: 16200,
-      savings: 21200,
-    },
-    {
-      id: '2',
-      type: 'debit',
-      balance: 12500.00,
-      title: 'HDFC Salary Account',
-      bankName: 'HDFC Bank',
-      lastFourDigits: '4532',
-      referenceNumber: '000012345678',
-      cardBrand: 'visa',
-      income: 50000,
-      expense: 28500,
-      savings: 21500,
-    },
-    {
-      id: '3',
-      type: 'credit',
-      balance: 25000.00,
-      title: 'ICICI Credit Card',
-      bankName: 'ICICI Bank',
-      lastFourDigits: '7890',
-      referenceNumber: '000098765432',
-      cardBrand: 'visa',
-      income: 0,
-      expense: 15600,
-      savings: 9400,
-    },
-  ];
+  const {
+    selectedMonth,
+    currentDayIndex,
+    handlePrevMonth,
+    handleNextMonth,
+    incrementDayIndex,
+    resetDayIndex,
+  } = useMonthNavigation();
 
-  const walletCategories: ICategorySpend[] = [
-    { id: '1', name: 'Telecom', amount: 0.00 },
-    { id: '2', name: 'Medicine', amount: 0.00 },
-    { id: '3', name: 'Rewards', amount: 0.00 },
-    { id: '4', name: 'Food', amount: 0.00 },
-    { id: '5', name: 'Entertainment', amount: 0.00 },
-  ];
+  const {
+    groupedTransactions,
+    isLoading,
+    loadingMore,
+    hasMore,
+    fetchTransactions,
+  } = useTransactionFilters();
+
+  // Initial load: fetch first 5 days of the selected month
+  useEffect(() => {
+    const { dateFrom, dateTo } = getNextDayBatch(selectedMonth, 0);
+    fetchTransactions(dateFrom, dateTo, false);
+    resetDayIndex();
+  }, [selectedMonth]);
+
+
+  // Handle load more
+  const handleLoadMore = () => {
+    const { dateFrom, dateTo } = getNextDayBatch(selectedMonth, currentDayIndex);
+    fetchTransactions(dateFrom, dateTo, true);
+    incrementDayIndex();
+  };
 
   return (
     <IonPage>
       <IonContent fullscreen>
         <div className="p-5 pb-24 space-y-4 bg-gray-100">
+          {/* Month Selector using HeaderNavItem */}
+          <HeaderNavItem 
+            title={formatMonthDisplay(selectedMonth)}
+            onPrev={handlePrevMonth}
+            onNext={handleNextMonth}
+          />
 
-          <HeaderNavItem title="2025 September" />
-          
           {/* Card Carousel */}
-          <CardCarousel cards={cards} />
+          <CardCarousel cards={MOCK_CARDS} />
 
-            <div className="mb-5">
-              <TransactionList
-                title='25 November'
-                isShowingFilter={false}
-                transactions={[
-                { transaction_id: '1', type: 'expense', date: '2024-11-25', description: 'Grocery Store', amount: -85.50, category: 'Grocery'},
-                { transaction_id: '2', type: 'expense', date: '2024-11-25', description: 'Gas Station', amount: -45.00, category: 'Gas'},
-                { transaction_id: '3', type: 'income', date: '2024-11-25', description: 'Outing', amount: 3200.00, category: 'Income'},
-                ]}
-                isLoading={false}
-              />
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-100">
+              <IonSpinner name="bubbles" />
             </div>
+          )}
+
+          {/* Transactions Grouped by Date */}
+          {!isLoading && Object.keys(groupedTransactions).length > 0 ? (
+            <div className="space-y-4">
+              {Object.entries(groupedTransactions).map(([date, transactions]) => (
+                <TransactionList
+                  key={date}
+                  title={formatDateDisplay(date)}
+                  transactions={transactions}
+                  isLoading={false}
+                  isShowingFilter={false}
+                />
+              ))}
+            </div>
+          ) : !isLoading ? (
+            <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-200">
+              <span className="text-sm text-gray-400">No transactions found</span>
+            </div>
+          ) : null}
+
+          {/* Load More Button */}
+          {!isLoading && hasMore && (
+            <div className="flex justify-center py-4">
+              <button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? (
+                  <div className="flex items-center gap-2 ">
+                    <IonSpinner name="dots" />
+                    Loading...
+                  </div>
+                ) : (
+                  <div className="px-4 py-1 bg-primary text-xs text-white rounded-2xl hover:bg-primary disabled:bg-gray-400">
+                    Load More
+                  </div>
+                )}
+              </button>
+            </div>
+          )}
         </div>
       </IonContent>
 
