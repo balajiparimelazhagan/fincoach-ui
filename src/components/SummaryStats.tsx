@@ -19,11 +19,25 @@ const StatItem: React.FC<StatItemProps> = ({ label, value, icon, color = '#34D39
   );
 };
 
-const SummaryStats: React.FC = () => {
+interface SummaryStatsProps {
+  income?: number;
+  expense?: number;
+  savings?: number;
+}
+
+const SummaryStats: React.FC<SummaryStatsProps> = ({ 
+  income = 0, 
+  expense = 0, 
+  savings = 0 
+}) => {
+  const formatNumber = (num: number): string => {
+    return num.toLocaleString('en-IN');
+  };
+
   const stats = [
-    { label: 'Income', value: '37,400', color: '#34D399', icon: '↓' },
-    { label: 'Expenses', value: '16,200', color: '#C92449', icon: '↑' },
-    { label: 'Savings', value: '56,300', color: '#8a4a64', icon: '⤓' },
+    { label: 'Income', value: formatNumber(income), color: '#34D399', icon: '↓' },
+    { label: 'Expenses', value: formatNumber(expense), color: '#C92449', icon: '↑' },
+    { label: 'Savings', value: formatNumber(savings), color: '#8a4a64', icon: '⤓' },
   ];
   return (
     <div className="border bg-white border-gray-200 rounded-xl py-3 px-5 mt-4">

@@ -1,5 +1,5 @@
-import React from 'react';
-import { IonPage, IonContent } from '@ionic/react';
+import React, { useEffect, useState } from 'react';
+import { IonPage, IonContent, IonSpinner } from '@ionic/react';
 import Footer from '../components/Footer';
 import SummaryStats from '../components/SummaryStats';
 import MonthlyOverviewChart from '../components/MonthlyOverviewChart';
@@ -8,72 +8,144 @@ import HeaderNavItem from '../components/HeaderNavItem';
 import TransactionList from '../components/TransactionList';
 import CardCarousel, { Card } from '../components/CardCarousel';
 import CategorySpend, { ICategorySpend } from '../components/CategorySpend';
+import { accountService, AccountWithStats } from '../services/accountService';
+import { statsService, SummaryStats as StatsResponse, CategorySpending } from '../services/statsService';
+import { getMonthDateRange, formatMonthDisplay } from '../utils/dateUtils';
+
+interface PageState {
+  cards: Card[];
+  summaryStats: {
+    income: number;
+    expense: number;
+    savings: number;
+  };
+  categories: ICategorySpend[];
+  isLoading: boolean;
+  error: string | null;
+}
 
 const Insights: React.FC = () => {
-  const cards: Card[] = [
-    {
-      id: '1',
-      type: 'debit',
-      balance: 4529.53,
-      title: 'IndusInd Zinger Multi Wallet Card',
-      bankName: 'IndusInd Bank',
-      lastFourDigits: '8926',
-      referenceNumber: '000046207703',
-      cardBrand: 'visa',
-      income: 37400,
-      expense: 16200,
-      savings: 21200,
-    },
-    {
-      id: '2',
-      type: 'debit',
-      balance: 12500.00,
-      title: 'HDFC Salary Account',
-      bankName: 'HDFC Bank',
-      lastFourDigits: '4532',
-      referenceNumber: '000012345678',
-      cardBrand: 'visa',
-      income: 50000,
-      expense: 28500,
-      savings: 21500,
-    },
-    {
-      id: '3',
-      type: 'credit',
-      balance: 25000.00,
-      title: 'ICICI Credit Card',
-      bankName: 'ICICI Bank',
-      lastFourDigits: '7890',
-      referenceNumber: '000098765432',
-      cardBrand: 'visa',
-      income: 0,
-      expense: 15600,
-      savings: 9400,
-    },
-  ];
+  const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [state, setState] = useState<PageState>({
+    cards: [],
+    summaryStats: { income: 0, expense: 0, savings: 0 },
+    categories: [],
+    isLoading: true,
+    error: null,
+  });
 
-  const walletCategories: ICategorySpend[] = [
-    { id: '1', name: 'Telecom', amount: 0.00 },
-    { id: '2', name: 'Medicine', amount: 0.00 },
-    { id: '3', name: 'Rewards', amount: 0.00 },
-    { id: '4', name: 'Food', amount: 0.00 },
-    { id: '5', name: 'Entertainment', amount: 0.00 },
-  ];
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setState(prev => ({ ...prev, isLoading: true, error: null }));
+
+        const { dateFrom, dateTo } = getMonthDateRange(selectedMonth);
+
+        const accountStatsResponse = await accountService.getAccountsWithStats(dateFrom, dateTo);
+        const accountCards: Card[] = accountStatsResponse.items.map((account: AccountWithStats) => ({
+          id: account.id,
+          type: account.type === 'credit' ? 'credit' : 'debit',
+          balance: 0, // Not available from current API
+          title: account.bank_name,
+          bankName: account.bank_name,
+          lastFourDigits: account.account_last_four,
+          referenceNumber: account.id.substring(0, 12).toUpperCase(),
+          cardBrand: 'visa' as const,
+          income: account.income,
+          expense: account.expense,
+          savings: account.savings,
+        }));
+
+        const statsData = await statsService.getComprehensiveStats(dateFrom, dateTo);
+
+        const categoryData: ICategorySpend[] = statsData.categories.map((cat: CategorySpending) => ({
+          id: cat.name.toLowerCase().replace(/\s+/g, '_'),
+          name: cat.name,
+          amount: cat.amount,
+        }));
+
+        setState(prev => ({
+          ...prev,
+          cards: accountCards,
+          summaryStats: {
+            income: statsData.income,
+            expense: statsData.expense,
+            savings: statsData.savings,
+          },
+          categories: categoryData,
+          isLoading: false,
+        }));
+      } catch (err) {
+        console.error('Error loading insights data:', err);
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: err instanceof Error ? err.message : 'Failed to load data',
+        }));
+      }
+    };
+
+    loadData();
+  }, [selectedMonth]);
+
+  const handlePrevMonth = () => {
+    setSelectedMonth(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() - 1);
+      return newDate;
+    });
+  };
+
+  const handleNextMonth = () => {
+    setSelectedMonth(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() + 1);
+      return newDate;
+    });
+  };
+
+  if (state.isLoading) {
+    return (
+      <IonPage>
+        <IonContent fullscreen>
+          <div className="flex items-center justify-center h-screen">
+            <IonSpinner name="crescent" />
+          </div>
+        </IonContent>
+      </IonPage>
+    );
+  }
+
+  const monthDisplay = formatMonthDisplay(selectedMonth);
 
   return (
     <IonPage>
       <IonContent fullscreen>
         <div className="p-5 pb-24 space-y-4 bg-gray-100">
 
-          <HeaderNavItem title="2025 September" />
+          <HeaderNavItem 
+            title={monthDisplay}
+            onPrev={handlePrevMonth}
+            onNext={handleNextMonth}
+          />
           
           {/* Card Carousel */}
-          <CardCarousel cards={cards} />
+          {state.cards.length > 0 ? (
+            <CardCarousel cards={state.cards} />
+          ) : (
+            <div className="text-center text-gray-500">No accounts available</div>
+          )}
           
-          <SummaryStats />
+          <SummaryStats 
+            income={state.summaryStats.income}
+            expense={state.summaryStats.expense}
+            savings={state.summaryStats.savings}
+          />
           
           {/* Category Wallets */}
-          <CategorySpend categories={walletCategories} />
+          {state.categories.length > 0 && (
+            <CategorySpend categories={state.categories} />
+          )}
 
           {/* Monthly overview chart */}
           <div className="relative">
@@ -107,6 +179,10 @@ const Insights: React.FC = () => {
               isLoading={false}
             />
           </div>
+
+          {state.error && (
+            <div className="text-red-500 text-center mt-4">{state.error}</div>
+          )}
         </div>
       </IonContent>
 
