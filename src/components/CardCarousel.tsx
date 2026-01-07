@@ -17,9 +17,15 @@ export interface Card {
 
 interface CardCarouselProps {
   cards: Card[];
+  onToggleChange?: (accountId: string, isEnabled: boolean) => void;
+  enabledAccounts?: Set<string>;
 }
 
-const CardCarousel: React.FC<CardCarouselProps> = ({ cards }) => {
+const CardCarousel: React.FC<CardCarouselProps> = ({ 
+  cards,
+  onToggleChange,
+  enabledAccounts
+}) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -31,6 +37,10 @@ const CardCarousel: React.FC<CardCarouselProps> = ({ cards }) => {
       setActiveIndex(newIndex);
     }
   }, []);
+
+  const handleToggle = (cardId: string, isChecked: boolean) => {
+    onToggleChange?.(cardId, isChecked);
+  };
 
   useEffect(() => {
     const container = scrollContainerRef.current;
@@ -64,7 +74,9 @@ const CardCarousel: React.FC<CardCarouselProps> = ({ cards }) => {
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {cards.map((card) => (
+        {cards.map((card) => {
+          const isEnabled = enabledAccounts ? enabledAccounts.has(card.id) : true;
+          return (
           <div
             key={card.id}
             className="shrink-0 flex justify-center snap-center w-full px-5"
@@ -73,27 +85,39 @@ const CardCarousel: React.FC<CardCarouselProps> = ({ cards }) => {
               scrollSnapStop: 'always',
             }}
           >
-            <div className="relative rounded-xl bg-white border border-gray-200 pb-1 w-80 overflow-hidden">
+            <div className={`relative rounded-xl border border-gray-200 pb-1 w-80 overflow-hidden transition-all ${
+              isEnabled ? 'bg-white' : 'bg-gray-100'
+            }`}>
               {/* Top Section: Card Title and Bank Name */}
               <div className="flex justify-between bg-primary items-center py-2 mb-3 px-2">
                 <div className="text-left shrink-0">
-                  <p className="text-xs text-white font-semibold whitespace-nowrap">
+                  <p className={`text-xs font-semibold whitespace-nowrap ${
+                    isEnabled ? 'text-white' : 'text-white/50'
+                  }`}>
                     {card.bankName}
                   </p>
                 </div>
                 <div className="shrink-0 mx-1">
-                  <IonToggle className="card-toggle" />
+                  <IonToggle 
+                    className="card-toggle" 
+                    checked={isEnabled}
+                    onIonChange={(e) => handleToggle(card.id, e.detail.checked)}
+                  />
                 </div>
               </div>
               <div className="flex-1 min-w-0 mb-4 px-4">
-                <p className="text-xs font-medium text-gray-900 leading-tight truncate">
+                <p className={`text-xs font-medium leading-tight truncate ${
+                  isEnabled ? 'text-gray-900' : 'text-gray-400'
+                }`}>
                   {card.title}
                 </p>
               </div>
 
               {/* Card Number Section */}
               <div className="mb-3 px-4">
-                <p className="text font-mono font-bold text-gray-900 tracking-wider">
+                <p className={`text font-mono font-bold tracking-wider ${
+                  isEnabled ? 'text-gray-900' : 'text-gray-400'
+                }`}>
                   **** **** **** {card.lastFourDigits}
                 </p>
               </div>
@@ -101,24 +125,30 @@ const CardCarousel: React.FC<CardCarouselProps> = ({ cards }) => {
               {/* Bottom Section: Income, Expense, Savings Summary */}
               <div className="flex justify-between items-center mb-2 px-4 gap-4">
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-green-600">
+                  <p className={`text-xs font-semibold ${
+                    isEnabled ? 'text-green-600' : 'text-green-400/50'
+                  }`}>
                     {formatCurrency(card.income || 0)}
                   </p>
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-red-600">
+                  <p className={`text-xs font-semibold ${
+                    isEnabled ? 'text-red-600' : 'text-red-400/50'
+                  }`}>
                     {formatCurrency(card.expense || 0)}
                   </p>
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-primary">
+                  <p className={`text-xs font-semibold ${
+                    isEnabled ? 'text-primary' : 'text-primary/50'
+                  }`}>
                     {formatCurrency(card.savings || 0)}
                   </p>
                 </div>
               </div>
             </div>
           </div>
-        ))}
+        )})}
       </div>
 
       {/* Pagination Dots */}

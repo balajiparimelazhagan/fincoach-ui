@@ -1,25 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { IonPage, IonContent, IonSpinner } from '@ionic/react';
 import Footer from '../components/Footer';
 import SummaryStats from '../components/SummaryStats';
 import MonthlyOverviewChart from '../components/MonthlyOverviewChart';
-import CalendarMonthView from '../components/CalendarMonthView';
 import HeaderNavItem from '../components/HeaderNavItem';
 import TransactionList from '../components/TransactionList';
 import CardCarousel, { Card } from '../components/CardCarousel';
-import CategorySpend, { ICategorySpend } from '../components/CategorySpend';
-import { accountService, AccountWithStats } from '../services/accountService';
-import { statsService, SummaryStats as StatsResponse, CategorySpending } from '../services/statsService';
-import { getMonthDateRange, formatMonthDisplay } from '../utils/dateUtils';
+import CategorySpend from '../components/CategorySpend';
+import { accountService } from '../services/accountService';
+import { getMonthDateRange, formatMonthDisplay, formatDateDisplay } from '../utils/dateUtils';
+import { useTransactionFilters } from '../hooks/useTransactionFilters';
+import { useAccountToggle } from '../hooks/useAccountToggle';
+import { useFilteredData } from '../hooks/useFilteredData';
+import { mapAccountsToCards } from '../utils/accountMapper';
 
 interface PageState {
   cards: Card[];
-  summaryStats: {
-    income: number;
-    expense: number;
-    savings: number;
-  };
-  categories: ICategorySpend[];
   isLoading: boolean;
   error: string | null;
 }
@@ -28,12 +24,24 @@ const Insights: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
   const [state, setState] = useState<PageState>({
     cards: [],
-    summaryStats: { income: 0, expense: 0, savings: 0 },
-    categories: [],
     isLoading: true,
     error: null,
   });
 
+  const { groupedTransactions, isLoading: transactionsLoading, fetchTransactions } = useTransactionFilters();
+  
+  // Extract account IDs for toggle management (memoized to prevent infinite loops)
+  const accountIds = useMemo(() => state.cards.map(card => card.id), [state.cards]);
+  const { enabledAccounts, handleToggleAccount } = useAccountToggle(accountIds);
+  
+  // Filter data based on enabled accounts
+  const { filteredTransactions, filteredSummaryStats, filteredCategories } = useFilteredData(
+    groupedTransactions,
+    state.cards,
+    enabledAccounts
+  );
+
+  // Load account and transaction data when month changes
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -41,40 +49,18 @@ const Insights: React.FC = () => {
 
         const { dateFrom, dateTo } = getMonthDateRange(selectedMonth);
 
+        // Fetch account stats
         const accountStatsResponse = await accountService.getAccountsWithStats(dateFrom, dateTo);
-        const accountCards: Card[] = accountStatsResponse.items.map((account: AccountWithStats) => ({
-          id: account.id,
-          type: account.type === 'credit' ? 'credit' : 'debit',
-          balance: 0, // Not available from current API
-          title: account.bank_name,
-          bankName: account.bank_name,
-          lastFourDigits: account.account_last_four,
-          referenceNumber: account.id.substring(0, 12).toUpperCase(),
-          cardBrand: 'visa' as const,
-          income: account.income,
-          expense: account.expense,
-          savings: account.savings,
-        }));
-
-        const statsData = await statsService.getComprehensiveStats(dateFrom, dateTo);
-
-        const categoryData: ICategorySpend[] = statsData.categories.map((cat: CategorySpending) => ({
-          id: cat.name.toLowerCase().replace(/\s+/g, '_'),
-          name: cat.name,
-          amount: cat.amount,
-        }));
+        const accountCards = mapAccountsToCards(accountStatsResponse.items);
 
         setState(prev => ({
           ...prev,
           cards: accountCards,
-          summaryStats: {
-            income: statsData.income,
-            expense: statsData.expense,
-            savings: statsData.savings,
-          },
-          categories: categoryData,
           isLoading: false,
         }));
+
+        // Fetch transactions for the month
+        fetchTransactions(dateFrom, dateTo, 50, 0, false);
       } catch (err) {
         console.error('Error loading insights data:', err);
         setState(prev => ({
@@ -86,8 +72,9 @@ const Insights: React.FC = () => {
     };
 
     loadData();
-  }, [selectedMonth]);
+  }, [selectedMonth, fetchTransactions]);
 
+  // Month navigation handlers
   const handlePrevMonth = () => {
     setSelectedMonth(prev => {
       const newDate = new Date(prev);
@@ -104,6 +91,7 @@ const Insights: React.FC = () => {
     });
   };
 
+  // Loading state
   if (state.isLoading) {
     return (
       <IonPage>
@@ -116,70 +104,70 @@ const Insights: React.FC = () => {
     );
   }
 
-  const monthDisplay = formatMonthDisplay(selectedMonth);
-
   return (
     <IonPage>
       <IonContent fullscreen>
         <div className="p-5 pb-24 space-y-4 bg-gray-100">
-
+          {/* Month Navigation */}
           <HeaderNavItem 
-            title={monthDisplay}
+            title={formatMonthDisplay(selectedMonth)}
             onPrev={handlePrevMonth}
             onNext={handleNextMonth}
           />
           
           {/* Card Carousel */}
           {state.cards.length > 0 ? (
-            <CardCarousel cards={state.cards} />
+            <CardCarousel 
+              cards={state.cards} 
+              onToggleChange={handleToggleAccount}
+              enabledAccounts={enabledAccounts}
+            />
           ) : (
             <div className="text-center text-gray-500">No accounts available</div>
           )}
           
+          {/* Summary Stats */}
           <SummaryStats 
-            income={state.summaryStats.income}
-            expense={state.summaryStats.expense}
-            savings={state.summaryStats.savings}
+            income={filteredSummaryStats.income}
+            expense={filteredSummaryStats.expense}
+            savings={filteredSummaryStats.savings}
           />
           
-          {/* Category Wallets */}
-          {state.categories.length > 0 && (
-            <CategorySpend categories={state.categories} />
+          {/* Category Spending */}
+          {filteredCategories.length > 0 && (
+            <CategorySpend categories={filteredCategories} />
           )}
 
-          {/* Monthly overview chart */}
+          {/* Monthly Overview Chart */}
           <div className="relative">
-            <span className="absolute top-2 left-3 pl-1 text-primary font-semibold"> This month</span>
-              <MonthlyOverviewChart />
-
-            {/* Monthly overview and calendar */}
-            {/* <CalendarMonthView /> */}
-            {/* Transactions content placeholder - List of transactions will go here */}
+            <span className="absolute top-2 left-3 pl-1 text-primary font-semibold">This month</span>
+            <MonthlyOverviewChart />
           </div>
-            <div className="mb-5">
-            <TransactionList
-              title='25 November'
-              isShowingFilter={false}
-              transactions={[
-              { transaction_id: '1', type: 'expense', date: '2024-11-25', description: 'Grocery Store', amount: -85.50, category: 'Grocery'},
-              { transaction_id: '2', type: 'expense', date: '2024-11-25', description: 'Gas Station', amount: -45.00, category: 'Gas'},
-              { transaction_id: '3', type: 'income', date: '2024-11-25', description: 'Outing', amount: 3200.00, category: 'Income'},
-              ]}
-              isLoading={false}
-            />
+
+          {/* Transactions Grouped by Date */}
+          {transactionsLoading ? (
+            <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-100">
+              <IonSpinner name="bubbles" />
             </div>
-          <div className="mb-5">
-            <TransactionList
-              title='23 November'
-              isShowingFilter={false}
-              transactions={[
-              { transaction_id: '4', type: 'expense', date: '2024-11-23', description: 'Netflix', amount: -640.50, category: 'Subscription'},
-              { transaction_id: '5', type: 'expense', date: '2024-11-23', description: 'Rent', amount: -15000.00, category: 'Rent'},
-              ]}
-              isLoading={false}
-            />
-          </div>
+          ) : Object.keys(filteredTransactions).length > 0 ? (
+            <div className="space-y-4">
+              {Object.entries(filteredTransactions).map(([date, transactions]) => (
+                <TransactionList
+                  key={date}
+                  title={formatDateDisplay(date)}
+                  transactions={transactions}
+                  isLoading={false}
+                  isShowingFilter={false}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-200">
+              <span className="text-sm text-gray-400">No transactions found for selected accounts</span>
+            </div>
+          )}
 
+          {/* Error Display */}
           {state.error && (
             <div className="text-red-500 text-center mt-4">{state.error}</div>
           )}
