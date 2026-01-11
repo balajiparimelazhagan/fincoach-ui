@@ -8,6 +8,7 @@ export interface Transactor {
   name: string;
   picture?: string;
   label?: string;
+  source_id?: string;
 }
 
 /**
@@ -99,6 +100,41 @@ class TransactionService {
    */
   async getTransactionById(transactionId: string): Promise<Transaction> {
     const response = await api.get<Transaction>(`/transactions/${transactionId}`);
+    return response.data;
+  }
+
+  /**
+   * Updates a transaction
+   * @param transactionId - Transaction ID
+   * @param updates - Fields to update
+   * @returns Promise with updated transaction data
+   */
+  async updateTransaction(
+    transactionId: string,
+    updates: { category_id?: string; transactor_label?: string }
+  ): Promise<Transaction> {
+    const response = await api.patch<Transaction>(`/transactions/${transactionId}`, updates);
+    return response.data;
+  }
+
+  /**
+   * Bulk update transactions based on scope
+   * @param transactionId - Transaction ID
+   * @param updates - Fields to update with scope
+   * @returns Promise with update result
+   */
+  async bulkUpdateTransactions(
+    transactionId: string,
+    updates: { 
+      category_id?: string; 
+      transactor_label?: string;
+      update_scope: 'single' | 'current_and_future' | 'month_only' | 'month_and_future';
+    }
+  ): Promise<{ updated_count: number; transaction: Transaction }> {
+    const response = await api.patch<{ updated_count: number; transaction: Transaction }>(
+      `/transactions/${transactionId}/bulk`,
+      updates
+    );
     return response.data;
   }
 

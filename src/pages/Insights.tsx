@@ -7,25 +7,34 @@ import HeaderNavItem from '../components/HeaderNavItem';
 import TransactionList from '../components/TransactionList';
 import CardCarousel, { Card } from '../components/CardCarousel';
 import CategorySpend from '../components/CategorySpend';
+import TransactionDetailModal from '../components/TransactionDetailModal';
 import { accountService } from '../services/accountService';
+import { Transaction } from '../services/transactionService';
+import { categoryService, Category } from '../services/categoryService';
 import { getMonthDateRange, formatMonthDisplay, formatDateDisplay } from '../utils/dateUtils';
 import { useTransactionFilters } from '../hooks/useTransactionFilters';
 import { useAccountToggle } from '../hooks/useAccountToggle';
 import { useFilteredData } from '../hooks/useFilteredData';
+import { useTransactionUpdate } from '../hooks/useTransactionUpdate';
 import { mapAccountsToCards } from '../utils/accountMapper';
 
 interface PageState {
   cards: Card[];
   isLoading: boolean;
   error: string | null;
+  categories: Category[];
 }
 
 const Insights: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
   const [state, setState] = useState<PageState>({
     cards: [],
     isLoading: true,
     error: null,
+    categories: [],
   });
 
   const { groupedTransactions, isLoading: transactionsLoading, fetchTransactions } = useTransactionFilters();
@@ -41,6 +50,15 @@ const Insights: React.FC = () => {
     enabledAccounts
   );
 
+  // Transaction update hook with refetch callback
+  const { handleTransactionUpdate } = useTransactionUpdate({
+    onSuccess: () => {
+      const { dateFrom, dateTo } = getMonthDateRange(selectedMonth);
+      fetchTransactions(dateFrom, dateTo, 50, 0, false);
+      handleCloseModal();
+    },
+  });
+
   // Load account and transaction data when month changes
   useEffect(() => {
     const loadData = async () => {
@@ -49,13 +67,18 @@ const Insights: React.FC = () => {
 
         const { dateFrom, dateTo } = getMonthDateRange(selectedMonth);
 
-        // Fetch account stats
-        const accountStatsResponse = await accountService.getAccountsWithStats(dateFrom, dateTo);
+        // Fetch account stats and categories in parallel
+        const [accountStatsResponse, categoriesData] = await Promise.all([
+          accountService.getAccountsWithStats(dateFrom, dateTo),
+          categoryService.getCategories(),
+        ]);
+        
         const accountCards = mapAccountsToCards(accountStatsResponse.items);
 
         setState(prev => ({
           ...prev,
           cards: accountCards,
+          categories: categoriesData,
           isLoading: false,
         }));
 
@@ -89,6 +112,18 @@ const Insights: React.FC = () => {
       newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
     });
+  };
+
+  // Handle transaction click to open modal
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  // Handle closing modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTransaction(null);
   };
 
   // Loading state
@@ -158,6 +193,7 @@ const Insights: React.FC = () => {
                   transactions={transactions}
                   isLoading={false}
                   isShowingFilter={false}
+                  onTransactionClick={handleTransactionClick}
                 />
               ))}
             </div>
@@ -173,6 +209,15 @@ const Insights: React.FC = () => {
           )}
         </div>
       </IonContent>
+
+      {/* Transaction Detail Modal */}
+      <TransactionDetailModal
+        isOpen={isModalOpen}
+        transaction={selectedTransaction}
+        onClose={handleCloseModal}
+        onSave={handleTransactionUpdate}
+        categories={state.categories}
+      />
 
       <Footer />
     </IonPage>

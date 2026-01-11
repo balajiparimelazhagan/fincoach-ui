@@ -7,8 +7,7 @@ interface TransactionCardProps {
   avatarUrl?: string;
   title: string;
   date?: string;
-  amount?: number; // positive or negative
-  fee?: string | number; // small text on the right below amount
+  amount?: number; 
   customIcon?: string; // emoji or icon identifier
   category?: string; // category for determining icon
   description?: string; // transaction description for tooltip
@@ -19,7 +18,7 @@ interface TransactionCardProps {
   };
 }
 
-const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, date, amount = 0, fee, customIcon, category, account }) => {
+const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, date, amount = 0, customIcon, category, account }) => {
   const amountFormatted = (amt: number) => {
     const sign = amt >= 0 ? '+' : '-';
     const abs = Math.abs(amt);

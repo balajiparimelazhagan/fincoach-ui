@@ -7,9 +7,16 @@ interface TransactionListProps {
   transactions?: Transaction[];
   isLoading?: boolean;
   isShowingFilter?: boolean;
+  onTransactionClick?: (transaction: Transaction) => void;
 }
 
-const TransactionList: React.FC<TransactionListProps> = ({ title, transactions = [], isLoading = false, isShowingFilter = false }) => {
+const TransactionList: React.FC<TransactionListProps> = ({ 
+  title, 
+  transactions = [], 
+  isLoading = false, 
+  isShowingFilter = false,
+  onTransactionClick 
+}) => {
   const [filter, setFilter] = React.useState('transactions');
 
   // Filter transactions based on selected filter
@@ -67,21 +74,25 @@ const TransactionList: React.FC<TransactionListProps> = ({ title, transactions =
       <span className="text pl-1 font-semibold text-primary">{title}</span>
       <div className="mt-1 border bg-white border-gray-200 rounded-xl ">
         {filteredTransactions.map((transaction) => (
-          <TransactionCard
+          <div
             key={transaction.id}
-            title={transaction.transactor?.name || transaction.description || 'Unknown'}
-            date={formatDate(transaction.date)}
-            amount={getDisplayAmount(transaction)}
-            fee={formatTime(transaction.date)}
-            avatarUrl={transaction.transactor?.picture}
-            category={typeof transaction.category === 'string' ? transaction.category : transaction.category?.label}
-            description={transaction.description}
-            account={transaction.account ? {
-              account_last_four: transaction.account.account_last_four,
-              bank_name: transaction.account.bank_name,
-              type: transaction.account.type,
-            } : undefined}
-          />
+            onClick={() => onTransactionClick?.(transaction)}
+            className="cursor-pointer hover:bg-gray-50 transition-colors"
+          >
+            <TransactionCard
+              title={transaction.transactor?.label || transaction.transactor?.name || transaction.description || 'Unknown'}
+              date={formatDate(transaction.date)}
+              amount={getDisplayAmount(transaction)}
+              avatarUrl={transaction.transactor?.picture}
+              category={typeof transaction.category === 'string' ? transaction.category : transaction.category?.label}
+              description={transaction.description}
+              account={transaction.account ? {
+                account_last_four: transaction.account.account_last_four,
+                bank_name: transaction.account.bank_name,
+                type: transaction.account.type,
+              } : undefined}
+            />
+          </div>
         ))}
       </div>
     </div>

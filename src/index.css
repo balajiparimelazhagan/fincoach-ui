@@ -98,3 +98,52 @@ ion-footer {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Transaction Detail Modal */
+.transaction-modal {
+  --width: 85%;
+  --max-width: 420px;
+  --height: 60%;
+  --border-radius: 16px 16px 0 0;
+}
+
+/* Checkbox styling */
+ion-checkbox {
+  --checkbox-background-checked: var(--color-primary);
+  --border-color-checked: var(--color-primary);
+  --checkmark-color: #ffffff;
+}
+
+/* Transaction modal buttons */
+.secondary-btn {
+  --background: #ffffff;
+  --background-hover: #f9fafb;
+  --color: var(--color-primary);
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: #d1d5db;
+  --border-radius: 20px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  font-weight: 600;
+  text-transform: none;
+  min-height: 20px;
+}
+
+ion-button {
+  --background: var(--color-primary);
+  --background-hover: rgba(36, 101, 160, 0.9);
+  --color: #ffffff;
+  --border-radius: 20px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  box-shadow: none !important;
+  text-transform: none;
+  min-height: 20px;
+  font-weight: 600;
+}
+

@@ -4,17 +4,24 @@ import Footer from '../components/Footer';
 import HeaderNavItem from '../components/HeaderNavItem';
 import TransactionList from '../components/TransactionList';
 import CardCarousel from '../components/CardCarousel';
+import TransactionDetailModal from '../components/TransactionDetailModal';
 import { useMonthNavigation } from '../hooks/useMonthNavigation';
 import { useTransactionFilters } from '../hooks/useTransactionFilters';
 import { useAccounts } from '../hooks/useAccounts';
 import { useAccountToggle } from '../hooks/useAccountToggle';
 import { useFilteredData } from '../hooks/useFilteredData';
+import { useTransactionUpdate } from '../hooks/useTransactionUpdate';
 import { formatMonthDisplay, formatDateDisplay, getMonthDateRange } from '../utils/dateUtils';
 import { mapAccountsToCards } from '../utils/accountMapper';
+import { Transaction } from '../services/transactionService';
+import { categoryService, Category } from '../services/categoryService';
 
 const Transactions: React.FC = () => {
   const ITEMS_PER_PAGE = 20;
   const [currentPage, setCurrentPage] = useState(0);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Hooks for month navigation and data fetching
   const { selectedMonth, handlePrevMonth, handleNextMonth } = useMonthNavigation();
@@ -34,6 +41,27 @@ const Transactions: React.FC = () => {
   // Filter transactions based on enabled accounts
   const { filteredTransactions } = useFilteredData(groupedTransactions, cards, enabledAccounts);
 
+  // Transaction update hook with refetch callback
+  const { handleTransactionUpdate } = useTransactionUpdate({
+    onSuccess: () => {
+      fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, 0, false);
+      handleCloseModal();
+    },
+  });
+
+  // Load categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categoriesData = await categoryService.getCategories();
+        setCategories(categoriesData);
+      } catch (err) {
+        console.error('Error loading categories:', err);
+      }
+    };
+    loadCategories();
+  }, []);
+
   // Load initial transactions when month changes
   useEffect(() => {
     fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, 0, false);
@@ -46,6 +74,18 @@ const Transactions: React.FC = () => {
     const offset = nextPage * ITEMS_PER_PAGE;
     fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, offset, true);
     setCurrentPage(nextPage);
+  };
+
+  // Handle transaction click to open modal
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  // Handle closing modal
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTransaction(null);
   };
 
   return (
@@ -93,6 +133,7 @@ const Transactions: React.FC = () => {
                   transactions={transactions}
                   isLoading={false}
                   isShowingFilter={false}
+                  onTransactionClick={handleTransactionClick}
                 />
               ))}
             </div>
@@ -128,6 +169,15 @@ const Transactions: React.FC = () => {
           )}
         </div>
       </IonContent>
+
+      {/* Transaction Detail Modal */}
+      <TransactionDetailModal
+        isOpen={isModalOpen}
+        transaction={selectedTransaction}
+        onClose={handleCloseModal}
+        onSave={handleTransactionUpdate}
+        categories={categories}
+      />
 
       <Footer />
     </IonPage>
