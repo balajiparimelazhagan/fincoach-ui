@@ -4,14 +4,14 @@ import Footer from '../components/Footer';
 import SummaryStats from '../components/SummaryStats';
 import MonthlyOverviewChart from '../components/MonthlyOverviewChart';
 import HeaderNavItem from '../components/HeaderNavItem';
-import TransactionList from '../components/TransactionList';
+import TopTransactorsChart from '../components/TopTransactorsChart';
 import CardCarousel, { Card } from '../components/CardCarousel';
 import CategorySpend from '../components/CategorySpend';
 import TransactionDetailModal from '../components/TransactionDetailModal';
 import { accountService } from '../services/accountService';
 import { Transaction } from '../services/transactionService';
 import { categoryService, Category } from '../services/categoryService';
-import { getMonthDateRange, formatMonthDisplay, formatDateDisplay } from '../utils/dateUtils';
+import { getMonthDateRange, formatMonthDisplay } from '../utils/dateUtils';
 import { useTransactionFilters } from '../hooks/useTransactionFilters';
 import { useAccountToggle } from '../hooks/useAccountToggle';
 import { useFilteredData } from '../hooks/useFilteredData';
@@ -58,6 +58,10 @@ const Insights: React.FC = () => {
       handleCloseModal();
     },
   });
+
+  const allFilteredTransactions = useMemo(() => {
+    return Object.values(filteredTransactions).flat();
+  }, [filteredTransactions]);
 
   // Load account and transaction data when month changes
   useEffect(() => {
@@ -112,12 +116,6 @@ const Insights: React.FC = () => {
       newDate.setMonth(newDate.getMonth() + 1);
       return newDate;
     });
-  };
-
-  // Handle transaction click to open modal
-  const handleTransactionClick = (transaction: Transaction) => {
-    setSelectedTransaction(transaction);
-    setIsModalOpen(true);
   };
 
   // Handle closing modal
@@ -179,29 +177,17 @@ const Insights: React.FC = () => {
             <MonthlyOverviewChart />
           </div>
 
-          {/* Transactions Grouped by Date */}
-          {transactionsLoading ? (
-            <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-100">
-              <IonSpinner name="bubbles" />
-            </div>
-          ) : Object.keys(filteredTransactions).length > 0 ? (
-            <div className="space-y-4">
-              {Object.entries(filteredTransactions).map(([date, transactions]) => (
-                <TransactionList
-                  key={date}
-                  title={formatDateDisplay(date)}
-                  transactions={transactions}
-                  isLoading={false}
-                  isShowingFilter={false}
-                  onTransactionClick={handleTransactionClick}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-200">
-              <span className="text-sm text-gray-400">No transactions found for selected accounts</span>
-            </div>
-          )}
+          {/* Top Transactors Chart */}
+          <div className="relative">
+            <span className="text-primary font-semibold mb-2 block pl-1">Top Spenders</span>
+            {transactionsLoading ? (
+              <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-100">
+                <IonSpinner name="bubbles" />
+              </div>
+            ) : (
+              <TopTransactorsChart transactions={allFilteredTransactions} />
+            )}
+          </div>
 
           {/* Error Display */}
           {state.error && (
