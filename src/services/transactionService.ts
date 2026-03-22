@@ -61,6 +61,20 @@ export interface TransactionListResponse {
 }
 
 /**
+ * Create Transaction Request
+ */
+export interface CreateTransactionRequest {
+  amount: number;
+  type: 'income' | 'expense' | 'saving';
+  description: string;
+  date: string;
+  category_id?: string;
+  account_id?: string;
+  for_whom?: string;
+  note?: string;
+}
+
+/**
  * Transaction Query Parameters
  */
 export interface TransactionQueryParams {
@@ -135,6 +149,16 @@ class TransactionService {
       `/transactions/${transactionId}/bulk`,
       updates
     );
+    return response.data;
+  }
+
+  /**
+   * Creates a new transaction manually
+   * @param data - Transaction creation data
+   * @returns Promise with created transaction
+   */
+  async createTransaction(data: CreateTransactionRequest): Promise<Transaction> {
+    const response = await api.post<Transaction>('/transactions', data);
     return response.data;
   }
 

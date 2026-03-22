@@ -7,6 +7,7 @@ import Transactions from './pages/Transactions';
 import Portfolio from './pages/Portfolio';
 import BillsCalendar from './pages/BillsCalendar';
 import Patterns from './pages/Patterns';
+import AddTransaction from './pages/AddTransaction';
 import { UserProvider } from './context/UserContext';
 
 /* Core CSS required for Ionic components to work properly */
@@ -55,6 +56,7 @@ const App: React.FC = () => {
           <Route exact path="/bills" component={BillsCalendar} />
           <Route exact path="/patterns" component={Patterns} />
           <Route exact path="/portfolio" component={Portfolio} />
+          <Route exact path="/add-transaction" component={AddTransaction} />
           <Route exact path="/" render={() => <Redirect to="/login" />} />
         </IonReactRouter>
       </UserProvider>

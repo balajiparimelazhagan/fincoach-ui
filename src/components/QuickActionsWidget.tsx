@@ -34,7 +34,7 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({
       icon: addCircleOutline,
       color: 'text-blue-600',
       bg: 'bg-blue-50',
-      onClick: onAddExpense || (() => {}),
+      onClick: onAddExpense || (() => history.push('/add-transaction', { type: 'expense' })),
     },
     {
       id: 'mark-paid',
@@ -50,7 +50,7 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({
       icon: swapHorizontalOutline,
       color: 'text-purple-600',
       bg: 'bg-purple-50',
-      onClick: onAddTransfer || (() => {}),
+      onClick: onAddTransfer || (() => history.push('/add-transaction', { type: 'saving' })),
     },
     {
       id: 'sync-gmail',

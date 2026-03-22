@@ -5,14 +5,21 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { userService } from '../services/userService';
 import { transactionService, Transaction } from '../services/transactionService';
 import { patternService, PatternObligation } from '../services/patternService';
+import { categoryService } from '../services/categoryService';
+import { Category } from '../services/categoryService';
 import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
-import IncomeExpenseDonuts from '../components/IncomeExpenseDonuts';
+import MonthSummaryCard from '../components/MonthSummaryCard';
 import TransactionList from '../components/TransactionList';
 import Bills from '../components/Bills';
 import CreditCardWidget from '../components/CreditCardWidget';
 import MorningCheckWidget from '../components/MorningCheckWidget';
 import QuickActionsWidget from '../components/QuickActionsWidget';
+import RentalIncomeWidget from '../components/RentalIncomeWidget';
+import FamilyBillsSummaryWidget from '../components/FamilyBillsSummaryWidget';
+import NetBalanceWidget from '../components/NetBalanceWidget';
+import WeeklyPictureWidget from '../components/WeeklyPictureWidget';
+import UncategorisedTransactionWidget from '../components/UncategorisedTransactionWidget';
 import { useUser } from '../context/UserContext';
 
 const MONTH_NAMES = [
@@ -30,6 +37,8 @@ const Dashboard: React.FC = () => {
   const [incomeExpenseData, setIncomeExpenseData] = useState<{ income: number; expense: number } | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [obligations, setObligations] = useState<PatternObligation[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [dismissedTxIds, setDismissedTxIds] = useState<Set<string>>(new Set());
   const [transactionsLoading, setTransactionsLoading] = useState(true);
   const [obligationsLoading, setObligationsLoading] = useState(true);
 
@@ -99,6 +108,9 @@ const Dashboard: React.FC = () => {
               .then(setObligations)
               .catch(console.error)
               .finally(() => setObligationsLoading(false)),
+            categoryService.getCategories()
+              .then(setCategories)
+              .catch(console.error),
           ]);
         }
 
@@ -121,6 +133,15 @@ const Dashboard: React.FC = () => {
   }, [selectedYear, selectedMonth, profile, isLoading, fetchMonthData]);
 
   const expenseObligations = obligations.filter(o => o.pattern?.direction === 'expense');
+  const monthLabel = `${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
+
+  // Transactions without a category (for uncategorised widget)
+  const uncategorisedTx = recentTransactions.filter(
+    t => t.type === 'expense' && !t.category && Math.abs(t.amount) >= 5000
+  );
+  const visibleUncategorised = uncategorisedTx.filter(
+    t => !dismissedTxIds.has(t.id || t.transaction_id || '')
+  );
 
   if (isLoading || userLoading) {
     return (
@@ -192,16 +213,37 @@ const Dashboard: React.FC = () => {
             />
           )}
 
-          {/* Income & Expense Overview */}
+          {/* Month Summary Card — controlled by income/expense preference */}
           {preferences?.dashboard?.show_income_expense && (
-            <IncomeExpenseDonuts
-              income={incomeExpenseData?.income}
-              expense={incomeExpenseData?.expense}
+            <MonthSummaryCard
+              income={incomeExpenseData?.income ?? 0}
+              expense={incomeExpenseData?.expense ?? 0}
+              month={monthLabel}
             />
           )}
 
+          {/* This Week's Financial Picture — current month only */}
+          {isCurrentMonth && <WeeklyPictureWidget obligations={obligations} />}
+
+          {/* Family Accounts — Net Balance */}
+          {isCurrentMonth && <NetBalanceWidget />}
+
           {/* Quick Actions */}
           <QuickActionsWidget />
+
+          {/* Uncategorised large transactions */}
+          {isCurrentMonth && visibleUncategorised.length > 0 && (
+            <UncategorisedTransactionWidget
+              transactions={visibleUncategorised}
+              categories={categories}
+              onCategorised={txId =>
+                setDismissedTxIds(prev => new Set([...prev, txId]))
+              }
+            />
+          )}
+
+          {/* Bills Summary */}
+          {isCurrentMonth && <FamilyBillsSummaryWidget obligations={obligations} />}
 
           {/* Bills */}
           <div>
@@ -213,6 +255,9 @@ const Dashboard: React.FC = () => {
               isLoading={obligationsLoading}
             />
           </div>
+
+          {/* Expected Income (rental / salary) */}
+          {isCurrentMonth && <RentalIncomeWidget obligations={obligations} />}
 
           {/* Credit Cards */}
           <CreditCardWidget obligations={obligations} />
