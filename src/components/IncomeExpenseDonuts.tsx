@@ -73,7 +73,7 @@ const DonutChart: React.FC<{
         <ReactECharts option={option} style={{ height: '100%', width: '100%' }} />
       </div>
       <div className="text-center py-1">
-        <div className="text-xs text-primary"> <span className='font-bold'>₹{formattedAmount}</span> yet to {isIncome ? 'earn' : 'expend'}</div>
+        <div className="text-xs text-primary"> <span className='font-bold'>{formattedAmount}</span> yet to {isIncome ? 'earn' : 'expend'}</div>
       </div>
     </div>
   );

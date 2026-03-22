@@ -178,17 +178,32 @@ class TransactionService {
    * @param userId - User ID
    * @returns Promise with income and expense totals for current month
    */
-    async getCurrentMonthTotals(userId: string): Promise<{ income: number; expense: number }> {
-        // Demo: using previous month instead of current month (this is demo alone)
-        const now = new Date();
-        const firstDayPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastDayPrevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+  async getCurrentMonthTotals(userId: string): Promise<{ income: number; expense: number }> {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-        const dateFrom = firstDayPrevMonth.toISOString().split('T')[0];
-        const dateTo = lastDayPrevMonth.toISOString().split('T')[0];
+    const dateFrom = firstDay.toISOString().split('T')[0];
+    const dateTo = lastDay.toISOString().split('T')[0];
 
-        return this.getIncomeExpenseTotals(userId, dateFrom, dateTo);
-    }
+    return this.getIncomeExpenseTotals(userId, dateFrom, dateTo);
+  }
+
+  /**
+   * Gets income and expense totals for a specific month
+   * @param year - Full year (e.g. 2026)
+   * @param month - 0-indexed month (0 = January)
+   * @returns Promise with income and expense totals
+   */
+  async getMonthTotals(year: number, month: number): Promise<{ income: number; expense: number }> {
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    const dateFrom = firstDay.toISOString().split('T')[0];
+    const dateTo = lastDay.toISOString().split('T')[0];
+
+    return this.getIncomeExpenseTotals('', dateFrom, dateTo);
+  }
 
   /**
    * Gets recent transactions (past transactions up to today)

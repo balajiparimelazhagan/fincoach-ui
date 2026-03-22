@@ -30,13 +30,10 @@ const ReviewList: React.FC = () => {
   const containerHeight = cardHeight + (sampleData.length - 1) * stackOffset;
 
   return (
-    <div>
-      <div className="px-1 mt-5 flex justify-between">
-        <span className="text pb-2 font-semibold text-gray-800">Add to budget ?</span>
-        <span className=" text-xs text-primary cursor-pointer py-1 px-2 font-semibold">See all</span>
-      </div>
+    <div className="mt-5 mx-auto flex flex-col overflow-hidden max-w-90">
+        <span className="text pb-2 font-semibold text-primary">Add to budget ?</span>
 
-      <div className="relative w-full" style={{ height: containerHeight || 'auto' }}>
+      <div className="relative w-full max-w-sm mx-auto" style={{ height: containerHeight || 'auto' }}>
         {sampleData.map((item, index) => (
           <div 
             key={item.id} 
@@ -53,7 +50,7 @@ const ReviewList: React.FC = () => {
           </div>
         ))}
       </div>
-      <div className="text-xs py-1 pr-1 bg-gray-50 border border-gray-200 rounded-b-xl border-t-0 text-primary text-center">swipe right to add &nbsp; &rarr;</div>
+      <div className="text-xs py-1 pr-1 bg-gray-50 border border-gray-200 rounded-b-xl border-t-0 text-primary text-center max-w-sm mx-auto">swipe right to add &nbsp; &rarr;</div>
     </div>
   );
 };

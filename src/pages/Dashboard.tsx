@@ -1,81 +1,105 @@
-import { IonContent, IonPage, IonSpinner, IonText } from '@ionic/react';
-import { useEffect, useState } from 'react';
+import { IonContent, IonPage, IonSpinner, IonText, IonIcon } from '@ionic/react';
+import { chevronBackOutline, chevronForwardOutline } from 'ionicons/icons';
+import { useEffect, useState, useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { userService } from '../services/userService';
 import { transactionService, Transaction } from '../services/transactionService';
+import { patternService, PatternObligation } from '../services/patternService';
 import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
 import IncomeExpenseDonuts from '../components/IncomeExpenseDonuts';
-import ReviewList from '../components/ReviewsList';
 import TransactionList from '../components/TransactionList';
-import TopPicksScroll from '../components/TopPicksScroll';
 import Bills from '../components/Bills';
+import CreditCardWidget from '../components/CreditCardWidget';
+import MorningCheckWidget from '../components/MorningCheckWidget';
+import QuickActionsWidget from '../components/QuickActionsWidget';
 import { useUser } from '../context/UserContext';
 
+const MONTH_NAMES = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+
 const Dashboard: React.FC = () => {
+  const now = new Date();
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [incomeExpenseData, setIncomeExpenseData] = useState<{ income: number; expense: number } | null>(null);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [obligations, setObligations] = useState<PatternObligation[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(true);
+  const [obligationsLoading, setObligationsLoading] = useState(true);
+
   const history = useHistory();
   const location = useLocation();
   const { state: { profile, preferences, loading: userLoading } } = useUser();
 
-  // Mock bills data - replace with API call later
-  const mockBills = [
-    { id: '1', name: 'Electricity', amount: 1250.00 },
-    { id: '2', name: 'Internet', amount: 899.00 },
-    { id: '3', name: 'Gas', amount: 650.00 },
-    { id: '4', name: 'Water', amount: 450.00 },
-    { id: '5', name: 'Mobile', amount: 399.00 },
-  ];
+  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
+
+  const handlePrevMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(y => y - 1);
+    } else {
+      setSelectedMonth(m => m - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    const nextIsAfterNow =
+      selectedYear > now.getFullYear() ||
+      (selectedYear === now.getFullYear() && selectedMonth >= now.getMonth());
+    if (nextIsAfterNow) return;
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(y => y + 1);
+    } else {
+      setSelectedMonth(m => m + 1);
+    }
+  };
+
+  const fetchMonthData = useCallback(async (year: number, month: number, userId: string) => {
+    try {
+      const data = await transactionService.getMonthTotals(year, month);
+      setIncomeExpenseData(data);
+    } catch (err) {
+      console.error('Failed to fetch transaction totals:', err);
+    }
+  }, []);
 
   useEffect(() => {
     const handleTokenAndAuth = async () => {
       try {
-        // Extract token from query params
         const searchParams = new URLSearchParams(location.search);
         const token = searchParams.get('token');
 
         if (token) {
-          // Save the token
           await userService.setAccessToken(token);
-
-          // Remove token from URL for security
           history.replace('/dashboard');
         }
 
-        // Check if user is authenticated
         const isAuthenticated = await userService.isAuthenticated();
-
         if (!isAuthenticated) {
-          // Redirect to login if not authenticated
           history.replace('/login');
           return;
         }
 
-        // Wait for user context to load profile and preferences
-        // Profile will be available from context
         if (profile) {
-          try {
-            const data = await transactionService.getCurrentMonthTotals(profile.id);
-            setIncomeExpenseData(data);
-          } catch (err: any) {
-            console.error('Failed to fetch transaction data:', err);
-          }
-
-          // Fetch transactions summary
-          try {
-            const [recent] = await Promise.all([
-              transactionService.getRecentTransactions(profile.id, 3)
-            ]);
-            setRecentTransactions(recent);
-          } catch (err: any) {
-            console.error('Failed to fetch transactions list:', err);
-          } finally {
-            setTransactionsLoading(false);
-          }
+          // Fetch month totals, recent transactions, and obligations in parallel
+          await Promise.all([
+            fetchMonthData(selectedYear, selectedMonth, profile.id).catch(console.error),
+            transactionService.getRecentTransactions(profile.id, 5)
+              .then(setRecentTransactions)
+              .catch(console.error)
+              .finally(() => setTransactionsLoading(false)),
+            patternService.getUpcomingObligations(45)
+              .then(setObligations)
+              .catch(console.error)
+              .finally(() => setObligationsLoading(false)),
+          ]);
         }
 
         setIsLoading(false);
@@ -90,13 +114,21 @@ const Dashboard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
-  if (isLoading) {
+  // Re-fetch totals when month changes
+  useEffect(() => {
+    if (!profile || isLoading) return;
+    fetchMonthData(selectedYear, selectedMonth, profile.id);
+  }, [selectedYear, selectedMonth, profile, isLoading, fetchMonthData]);
+
+  const expenseObligations = obligations.filter(o => o.pattern?.direction === 'expense');
+
+  if (isLoading || userLoading) {
     return (
       <IonPage>
         <IonContent fullscreen className="flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <IonSpinner name="bubbles" />
-            <IonText color="medium">Fetching your expenses</IonText>
+            <IonText color="medium">Fetching your finances</IonText>
           </div>
         </IonContent>
       </IonPage>
@@ -123,54 +155,75 @@ const Dashboard: React.FC = () => {
       <ProfileHeader userProfile={profile} />
 
       <IonContent fullscreen>
-        <div className="p-5 pb-24 bg-gray-100">
-          {/* Income & Expense Overview */}
-          {preferences?.dashboard?.show_income_expense && (
-            <div className="mb-5">
-              <IncomeExpenseDonuts
-                income={incomeExpenseData?.income}
-                expense={incomeExpenseData?.expense}
-              />
-            </div>
-          )}
+        <div className="p-5 pb-24 bg-gray-100 flex flex-col gap-5">
 
-          {/* AI Suggestions */}
-          {preferences?.dashboard?.show_ai_suggestions && (
-            <div className="mb-5">
-              <TopPicksScroll
-                items={[
-                  { id: '1', message: 'What if I reduce my latenight cravings?' },
-                  { id: '2', message: 'How much can I save this month?' },
-                ]}
-                onCardClick={(item: any) => console.log('Clicked:', item)}
-              />
-            </div>
-          )}
-
-          {/* Bills */}
-          <div className="mb-5">
-            <div className="mb-2 px-1">
-              <span className="text-sm font-semibold text-gray-800">Bills</span>
-            </div>
-            <Bills bills={mockBills} />
+          {/* Month Selector */}
+          <div className="flex items-center justify-between bg-white rounded-xl px-4 py-2 border border-gray-200">
+            <button
+              onClick={handlePrevMonth}
+              className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-100"
+            >
+              <IonIcon icon={chevronBackOutline} className="text-gray-600" />
+            </button>
+            <span className="text-sm font-semibold text-gray-800">
+              {MONTH_NAMES[selectedMonth]} {selectedYear}
+              {isCurrentMonth && (
+                <span className="ml-2 text-xs font-normal text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  This month
+                </span>
+              )}
+            </span>
+            <button
+              onClick={handleNextMonth}
+              disabled={isCurrentMonth}
+              className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-100 disabled:opacity-30"
+            >
+              <IonIcon icon={chevronForwardOutline} className="text-gray-600" />
+            </button>
           </div>
 
-          {/* Budget Summary */}
-          {preferences?.dashboard?.show_budget_summary && (
-            <div className="mb-5">
-              <ReviewList />
-            </div>
+          {/* Morning Check Widget — only show for current month */}
+          {isCurrentMonth && (incomeExpenseData?.income || 0) + obligations.length > 0 && (
+            <MorningCheckWidget
+              obligations={obligations}
+              recentTransactions={recentTransactions}
+              income={incomeExpenseData?.income ?? 0}
+              expense={incomeExpenseData?.expense ?? 0}
+            />
           )}
+
+          {/* Income & Expense Overview */}
+          {preferences?.dashboard?.show_income_expense && (
+            <IncomeExpenseDonuts
+              income={incomeExpenseData?.income}
+              expense={incomeExpenseData?.expense}
+            />
+          )}
+
+          {/* Quick Actions */}
+          <QuickActionsWidget />
+
+          {/* Bills */}
+          <div>
+            <div className="mb-2 px-1">
+              <span className="text-sm font-semibold text-gray-800">Upcoming Bills</span>
+            </div>
+            <Bills
+              obligations={expenseObligations}
+              isLoading={obligationsLoading}
+            />
+          </div>
+
+          {/* Credit Cards */}
+          <CreditCardWidget obligations={obligations} />
 
           {/* Recent Transactions */}
           {preferences?.dashboard?.show_transaction_list && (
-            <div className="mb-5">
-              <TransactionList
-                title='Recent transactions'
-                transactions={recentTransactions}
-                isLoading={transactionsLoading}
-              />
-            </div>
+            <TransactionList
+              title="Recent transactions"
+              transactions={recentTransactions}
+              isLoading={transactionsLoading}
+            />
           )}
         </div>
       </IonContent>
@@ -181,4 +234,3 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
-
