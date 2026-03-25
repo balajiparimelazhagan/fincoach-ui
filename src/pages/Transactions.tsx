@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { IonPage, IonContent, IonSpinner } from '@ionic/react';
 import Footer from '../components/Footer';
+import QuickActionsWidget from '../components/QuickActionsWidget';
 import HeaderNavItem from '../components/HeaderNavItem';
 import TransactionList from '../components/TransactionList';
 import CardCarousel from '../components/CardCarousel';
@@ -92,8 +93,11 @@ const Transactions: React.FC = () => {
     <IonPage>
       <IonContent fullscreen>
         <div className="p-5 pb-24 space-y-4 bg-gray-100">
+          {/* Quick Actions */}
+          <QuickActionsWidget />
+
           {/* Month Selector using HeaderNavItem */}
-          <HeaderNavItem 
+          <HeaderNavItem
             title={formatMonthDisplay(selectedMonth)}
             onPrev={handlePrevMonth}
             onNext={handleNextMonth}

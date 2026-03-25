@@ -1,5 +1,4 @@
-import { IonContent, IonPage, IonSpinner, IonText, IonIcon } from '@ionic/react';
-import { chevronBackOutline, chevronForwardOutline } from 'ionicons/icons';
+import { IonContent, IonPage, IonSpinner, IonText } from '@ionic/react';
 import { useEffect, useState, useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { userService } from '../services/userService';
@@ -14,7 +13,6 @@ import TransactionList from '../components/TransactionList';
 import Bills from '../components/Bills';
 import CreditCardWidget from '../components/CreditCardWidget';
 import MorningCheckWidget from '../components/MorningCheckWidget';
-import QuickActionsWidget from '../components/QuickActionsWidget';
 import RentalIncomeWidget from '../components/RentalIncomeWidget';
 import FamilyBillsSummaryWidget from '../components/FamilyBillsSummaryWidget';
 import NetBalanceWidget from '../components/NetBalanceWidget';
@@ -48,29 +46,12 @@ const Dashboard: React.FC = () => {
 
   const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
 
-  const handlePrevMonth = () => {
-    if (selectedMonth === 0) {
-      setSelectedMonth(11);
-      setSelectedYear(y => y - 1);
-    } else {
-      setSelectedMonth(m => m - 1);
-    }
+  const handleMonthSelect = (year: number, month: number) => {
+    setSelectedYear(year);
+    setSelectedMonth(month);
   };
 
-  const handleNextMonth = () => {
-    const nextIsAfterNow =
-      selectedYear > now.getFullYear() ||
-      (selectedYear === now.getFullYear() && selectedMonth >= now.getMonth());
-    if (nextIsAfterNow) return;
-    if (selectedMonth === 11) {
-      setSelectedMonth(0);
-      setSelectedYear(y => y + 1);
-    } else {
-      setSelectedMonth(m => m + 1);
-    }
-  };
-
-  const fetchMonthData = useCallback(async (year: number, month: number, userId: string) => {
+  const fetchMonthData = useCallback(async (year: number, month: number) => {
     try {
       const data = await transactionService.getMonthTotals(year, month);
       setIncomeExpenseData(data);
@@ -78,6 +59,26 @@ const Dashboard: React.FC = () => {
       console.error('Failed to fetch transaction totals:', err);
     }
   }, []);
+
+  const fetchDashboardData = useCallback(async () => {
+    if (!profile) return;
+    setTransactionsLoading(true);
+    setObligationsLoading(true);
+    await Promise.all([
+      fetchMonthData(selectedYear, selectedMonth),
+      transactionService.getRecentTransactions(profile.id, 5)
+        .then(setRecentTransactions)
+        .catch(console.error)
+        .finally(() => setTransactionsLoading(false)),
+      patternService.getUpcomingObligations(45)
+        .then(setObligations)
+        .catch(console.error)
+        .finally(() => setObligationsLoading(false)),
+      categoryService.getCategories()
+        .then(setCategories)
+        .catch(console.error),
+    ]);
+  }, [profile, selectedYear, selectedMonth, fetchMonthData]);
 
   useEffect(() => {
     const handleTokenAndAuth = async () => {
@@ -96,24 +97,7 @@ const Dashboard: React.FC = () => {
           return;
         }
 
-        if (profile) {
-          // Fetch month totals, recent transactions, and obligations in parallel
-          await Promise.all([
-            fetchMonthData(selectedYear, selectedMonth, profile.id).catch(console.error),
-            transactionService.getRecentTransactions(profile.id, 5)
-              .then(setRecentTransactions)
-              .catch(console.error)
-              .finally(() => setTransactionsLoading(false)),
-            patternService.getUpcomingObligations(45)
-              .then(setObligations)
-              .catch(console.error)
-              .finally(() => setObligationsLoading(false)),
-            categoryService.getCategories()
-              .then(setCategories)
-              .catch(console.error),
-          ]);
-        }
-
+        await fetchDashboardData();
         setIsLoading(false);
       } catch (err: any) {
         console.error('Dashboard initialization error:', err);
@@ -129,13 +113,12 @@ const Dashboard: React.FC = () => {
   // Re-fetch totals when month changes
   useEffect(() => {
     if (!profile || isLoading) return;
-    fetchMonthData(selectedYear, selectedMonth, profile.id);
+    fetchMonthData(selectedYear, selectedMonth);
   }, [selectedYear, selectedMonth, profile, isLoading, fetchMonthData]);
 
   const expenseObligations = obligations.filter(o => o.pattern?.direction === 'expense');
   const monthLabel = `${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
 
-  // Transactions without a category (for uncategorised widget)
   const uncategorisedTx = recentTransactions.filter(
     t => t.type === 'expense' && !t.category && Math.abs(t.amount) >= 5000
   );
@@ -173,35 +156,16 @@ const Dashboard: React.FC = () => {
 
   return (
     <IonPage>
-      <ProfileHeader userProfile={profile} />
+      <ProfileHeader
+        userProfile={profile}
+        selectedMonth={selectedMonth}
+        selectedYear={selectedYear}
+        onMonthSelect={handleMonthSelect}
+        onRefresh={fetchDashboardData}
+      />
 
       <IonContent fullscreen>
         <div className="p-5 pb-24 bg-gray-100 flex flex-col gap-5">
-
-          {/* Month Selector */}
-          <div className="flex items-center justify-between bg-white rounded-xl px-4 py-2 border border-gray-200">
-            <button
-              onClick={handlePrevMonth}
-              className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-100"
-            >
-              <IonIcon icon={chevronBackOutline} className="text-gray-600" />
-            </button>
-            <span className="text-sm font-semibold text-gray-800">
-              {MONTH_NAMES[selectedMonth]} {selectedYear}
-              {isCurrentMonth && (
-                <span className="ml-2 text-xs font-normal text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                  This month
-                </span>
-              )}
-            </span>
-            <button
-              onClick={handleNextMonth}
-              disabled={isCurrentMonth}
-              className="w-8 h-8 flex items-center justify-center rounded-full active:bg-gray-100 disabled:opacity-30"
-            >
-              <IonIcon icon={chevronForwardOutline} className="text-gray-600" />
-            </button>
-          </div>
 
           {/* Morning Check Widget — only show for current month */}
           {isCurrentMonth && (incomeExpenseData?.income || 0) + obligations.length > 0 && (
@@ -213,7 +177,7 @@ const Dashboard: React.FC = () => {
             />
           )}
 
-          {/* Month Summary Card — controlled by income/expense preference */}
+          {/* Month Summary Card */}
           {preferences?.dashboard?.show_income_expense && (
             <MonthSummaryCard
               income={incomeExpenseData?.income ?? 0}
@@ -227,9 +191,6 @@ const Dashboard: React.FC = () => {
 
           {/* Family Accounts — Net Balance */}
           {isCurrentMonth && <NetBalanceWidget />}
-
-          {/* Quick Actions */}
-          <QuickActionsWidget />
 
           {/* Uncategorised large transactions */}
           {isCurrentMonth && visibleUncategorised.length > 0 && (

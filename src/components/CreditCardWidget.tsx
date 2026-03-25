@@ -71,7 +71,8 @@ const CreditCardWidget: React.FC<CreditCardWidgetProps> = ({ obligations: propOb
           };
         });
 
-        setCards(displayItems);
+        // Only show cards that have an actual obligation (upcoming, paid, or overdue)
+        setCards(displayItems.filter(c => c.daysUntilDue !== null));
       } catch (err) {
         console.error('Failed to fetch credit card data:', err);
         setCards([]);

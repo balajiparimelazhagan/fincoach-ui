@@ -45,6 +45,14 @@ const NetBalanceWidget: React.FC = () => {
     savingsAccounts.reduce((sum, a) => sum + (a.income - a.expense), 0) -
     creditAccounts.reduce((sum, a) => sum + a.expense, 0);
 
+  // Only show accounts with non-zero balance
+  const visibleAccounts = accounts.filter(a => {
+    const balance = a.type === 'credit' ? -(a.expense) : a.income - a.expense;
+    return balance !== 0;
+  });
+
+  if (visibleAccounts.length === 0) return null;
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
       <div className="flex items-center gap-2 mb-3">
@@ -53,7 +61,7 @@ const NetBalanceWidget: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-2.5">
-        {accounts.map(account => {
+        {visibleAccounts.map(account => {
           const isCredit = account.type === 'credit';
           const balance = isCredit
             ? -(account.expense)
