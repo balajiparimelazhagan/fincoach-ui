@@ -12,11 +12,7 @@ import {
   trendingUpOutline,
   trendingDownOutline,
   repeatOutline,
-  checkmarkCircleOutline,
-  pauseCircleOutline,
-  closeCircleOutline,
   alertCircleOutline,
-  chevronForwardOutline,
   flashOutline,
 } from 'ionicons/icons';
 import Footer from '../components/Footer';
@@ -49,31 +45,12 @@ const Patterns: React.FC = () => {
     fetch();
   }, []);
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0,
-    }).format(amount);
-
   const formatInterval = (days: number): string => {
     if (days >= 28 && days <= 31) return 'Monthly';
     if (days >= 85 && days <= 95) return 'Quarterly';
     if (days >= 350 && days <= 380) return 'Annual';
     if (days === 7) return 'Weekly';
     return `Every ${days}d`;
-  };
-
-  const getStatusIcon = (status: string) => {
-    if (status === 'ACTIVE') return checkmarkCircleOutline;
-    if (status === 'PAUSED') return pauseCircleOutline;
-    return closeCircleOutline;
-  };
-
-  const getStatusColor = (status: string) => {
-    if (status === 'ACTIVE') return 'text-green-600';
-    if (status === 'PAUSED') return 'text-amber-500';
-    return 'text-red-400';
   };
 
   const getStatusBadgeColor = (status: string): 'success' | 'warning' | 'danger' | 'medium' => {

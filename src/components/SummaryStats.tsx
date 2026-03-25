@@ -3,11 +3,10 @@ import React from 'react';
 interface StatItemProps {
   label: string;
   value: number | string;
-  icon?: React.ReactNode | string;
   color?: string;
 }
 
-const StatItem: React.FC<StatItemProps> = ({ label, value, icon, color = '#34D399' }) => {
+const StatItem: React.FC<StatItemProps> = ({ label, value, color = '#34D399' }) => {
   return (
     <div className="flex flex-col items-center">
       <div className="flex items-center gap-2">

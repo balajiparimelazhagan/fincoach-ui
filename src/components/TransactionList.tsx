@@ -10,14 +10,13 @@ interface TransactionListProps {
   onTransactionClick?: (transaction: Transaction) => void;
 }
 
-const TransactionList: React.FC<TransactionListProps> = ({ 
-  title, 
-  transactions = [], 
-  isLoading = false, 
-  isShowingFilter = false,
-  onTransactionClick 
+const TransactionList: React.FC<TransactionListProps> = ({
+  title,
+  transactions = [],
+  isLoading = false,
+  onTransactionClick
 }) => {
-  const [filter, setFilter] = React.useState('transactions');
+  const filter = 'transactions';
 
   // Filter transactions based on selected filter
   const filteredTransactions = React.useMemo(() => {
@@ -36,14 +35,6 @@ const TransactionList: React.FC<TransactionListProps> = ({
     const day = date.getDate();
     const month = date.toLocaleDateString('en-US', { month: 'short' });
     return `${day} ${month}`;
-  };
-
-  // Format time to show "5.43" format
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    const hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    return `${hours}.${minutes}`;
   };
 
   // Get display amount (positive for income, negative for expense)

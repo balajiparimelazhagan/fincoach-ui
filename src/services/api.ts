@@ -75,7 +75,6 @@ api.interceptors.response.use(
       error.message === 'Network Error'; // Network errors
 
     if (shouldRetry && config) {
-      const retryCount = config._retry || 0;
       const key = `${config.method}:${config.url}`;
       const currentRetries = retryMap.get(key) || 0;
 
@@ -86,10 +85,12 @@ api.interceptors.response.use(
           MAX_RETRY_DELAY
         );
 
-        console.warn(
-          `Retrying request: ${config.method?.toUpperCase()} ${config.url} (attempt ${currentRetries + 1}/${MAX_RETRIES})`,
-          { delay }
-        );
+        if (import.meta.env.DEV) {
+          console.warn(
+            `Retrying request: ${config.method?.toUpperCase()} ${config.url} (attempt ${currentRetries + 1}/${MAX_RETRIES})`,
+            { delay }
+          );
+        }
 
         retryMap.set(key, currentRetries + 1);
 

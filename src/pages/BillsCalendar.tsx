@@ -88,8 +88,6 @@ const BillsCalendar: React.FC = () => {
   const getDayBg = (day: number) => {
     const bills = byDay[day];
     if (!bills || bills.length === 0) return '';
-    const today = now.getDate();
-    const isToday = selectedYear === now.getFullYear() && selectedMonth === now.getMonth() && day === today;
     const hasFulfilled = bills.every(b => b.status === 'FULFILLED');
     if (hasFulfilled) return 'bg-green-100 rounded-full';
     const daysUntil = patternService.getDaysUntilDue(bills[0]);
@@ -116,13 +114,13 @@ const BillsCalendar: React.FC = () => {
         <div className="pb-24">
           {/* Month Navigation */}
           <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-gray-100">
-            <button onClick={handlePrevMonth} className="w-8 h-8 flex items-center justify-center active:bg-gray-100 rounded-full">
+            <button onClick={handlePrevMonth} aria-label="Previous month" className="w-11 h-11 flex items-center justify-center active:bg-gray-100 rounded-full">
               <IonIcon icon={chevronBackOutline} className="text-gray-600" />
             </button>
             <span className="text-base font-semibold text-gray-800">
               {MONTH_NAMES[selectedMonth]} {selectedYear}
             </span>
-            <button onClick={handleNextMonth} className="w-8 h-8 flex items-center justify-center active:bg-gray-100 rounded-full">
+            <button onClick={handleNextMonth} aria-label="Next month" className="w-11 h-11 flex items-center justify-center active:bg-gray-100 rounded-full">
               <IonIcon icon={chevronForwardOutline} className="text-gray-600" />
             </button>
           </div>

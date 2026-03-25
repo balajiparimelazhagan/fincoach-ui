@@ -19,6 +19,7 @@ import NetBalanceWidget from '../components/NetBalanceWidget';
 import WeeklyPictureWidget from '../components/WeeklyPictureWidget';
 import UncategorisedTransactionWidget from '../components/UncategorisedTransactionWidget';
 import { useUser } from '../context/UserContext';
+import { getErrorMessage } from '../utils/errors';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -99,9 +100,9 @@ const Dashboard: React.FC = () => {
 
         await fetchDashboardData();
         setIsLoading(false);
-      } catch (err: any) {
+      } catch (err) {
         console.error('Dashboard initialization error:', err);
-        setError(err?.message || 'Failed to initialize dashboard');
+        setError(getErrorMessage(err));
         setIsLoading(false);
       }
     };

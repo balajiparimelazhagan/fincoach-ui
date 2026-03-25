@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
 import { userService, UserProfile, UserPreferences, DashboardPreferences } from '../services/userService';
+import { getErrorMessage } from '../utils/errors';
 
 // ============ State Types ============
 
@@ -108,11 +109,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         type: 'SET_USER_DATA',
         payload: userData
       });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to fetch user data:', err);
-      dispatch({ 
-        type: 'SET_ERROR', 
-        payload: err?.message || 'Failed to fetch user data' 
+      dispatch({
+        type: 'SET_ERROR',
+        payload: getErrorMessage(err)
       });
       
       // Set default preferences on error
@@ -142,12 +143,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
       
       // Update with server response
       dispatch({ type: 'SET_PREFERENCES', payload: response.ui_preferences });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to update preference:', err);
-      
-      // Revert optimistic update by refetching
       await fetchUserData();
-      
       throw err;
     }
   };
@@ -156,7 +154,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     try {
       const response = await userService.updateDashboardPreferences(prefs);
       dispatch({ type: 'SET_PREFERENCES', payload: response.ui_preferences });
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to update preferences:', err);
       throw err;
     }

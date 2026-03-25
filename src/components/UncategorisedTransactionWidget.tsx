@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IonIcon, IonSpinner } from '@ionic/react';
-import { helpCircleOutline, checkmarkOutline, chevronDownOutline } from 'ionicons/icons';
+import { helpCircleOutline, chevronDownOutline } from 'ionicons/icons';
 import { Transaction, transactionService } from '../services/transactionService';
 import { Category } from '../services/categoryService';
 

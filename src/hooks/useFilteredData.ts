@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { Transaction } from '../services/transactionService';
 import { Card } from '../components/CardCarousel';
-import { ICategorySpend } from '../components/CategorySpend';
 
 interface GroupedTransactions {
   [date: string]: Transaction[];

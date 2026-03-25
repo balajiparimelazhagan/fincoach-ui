@@ -68,7 +68,8 @@ const QuickActionsWidget: React.FC<QuickActionsWidgetProps> = ({
         <button
           key={action.id}
           onClick={action.onClick}
-          className={`flex flex-col items-center gap-1.5 rounded-xl p-3 ${action.bg} active:opacity-70 transition-opacity`}
+          aria-label={action.label}
+          className={`flex flex-col items-center gap-1.5 rounded-xl p-3 min-h-[60px] ${action.bg} active:opacity-70 transition-opacity`}
         >
           <IonIcon icon={action.icon} className={`text-2xl ${action.color}`} />
           <span className="text-xs font-medium text-gray-700 text-center leading-tight">

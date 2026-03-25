@@ -3,10 +3,6 @@
  * Automatically maps transactions to categories based on transactor name and patterns
  */
 
-interface CategoryRule {
-  keywords: string[];
-}
-
 /**
  * Category mapping rules with keywords
  */

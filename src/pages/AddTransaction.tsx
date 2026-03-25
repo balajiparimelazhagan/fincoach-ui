@@ -88,9 +88,10 @@ const AddTransaction: React.FC = () => {
       setToastColor('success');
       setToastMsg('Transaction added!');
       setTimeout(() => history.goBack(), 800);
-    } catch (err: any) {
+    } catch (err) {
       setToastColor('danger');
-      setToastMsg(err?.response?.data?.detail || 'Failed to add transaction. Please try again.');
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setToastMsg(detail ?? 'Failed to add transaction. Please try again.');
     } finally {
       setSubmitting(false);
     }

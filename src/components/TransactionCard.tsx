@@ -1,6 +1,6 @@
 import React from 'react';
 import { IonIcon } from '@ionic/react';
-import { personCircleOutline, arrowUpOutline, cardOutline, receiptOutline, walletOutline } from 'ionicons/icons';
+import { personCircleOutline, arrowUpOutline, cardOutline, walletOutline } from 'ionicons/icons';
 import { getCategoryIcon } from '../utils/categoryIconMap';
 
 interface TransactionCardProps {
@@ -18,7 +18,7 @@ interface TransactionCardProps {
   };
 }
 
-const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, date, amount = 0, customIcon, category, account }) => {
+const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, amount = 0, customIcon, category, account }) => {
   const amountFormatted = (amt: number) => {
     const sign = amt >= 0 ? '+' : '-';
     const abs = Math.abs(amt);

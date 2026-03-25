@@ -16,9 +16,9 @@ const Login: React.FC = () => {
       
       // Redirect to Google's authorization page
       window.location.href = authorization_url;
-    } catch (err: any) {
-      const errorMessage = err?.response?.data?.detail || err?.message || 'Failed to initiate Google sign-in';
-      setError(errorMessage);
+    } catch (err) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setError(detail ?? 'Failed to initiate Google sign-in');
       console.error('Google sign-in error:', err);
       setIsLoading(false);
     }

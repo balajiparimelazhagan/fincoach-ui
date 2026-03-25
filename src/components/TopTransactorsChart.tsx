@@ -42,7 +42,7 @@ const TopTransactorsChart: React.FC<TopTransactorsChartProps> = ({ transactions 
       .reverse();
   }, [transactions]);
 
-  const option = {
+  const option = useMemo(() => ({
     tooltip: {
       trigger: 'axis',
       axisPointer: {
@@ -101,7 +101,7 @@ const TopTransactorsChart: React.FC<TopTransactorsChartProps> = ({ transactions 
         barMaxWidth: 25,
       },
     ],
-  };
+  }), [topTransactors]);
 
   if (topTransactors.length === 0) {
     return (

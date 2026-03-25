@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 
 interface SeriesPoint {
@@ -40,12 +40,10 @@ const MonthlyOverviewChart: React.FC = () => {
 
   const series = [incomeSeries, expenseSeries, savingSeries];
 
-  // compute a minimum width for the chart so it can scroll horizontally if necessary
-  const chartColumnWidth = 20; // width per category (smaller gaps when this is tight combined with barWidth)
-  // keep an appropriate minimum width (no larger than necessary to reduce visual gaps when only few categories)
+  const chartColumnWidth = 20;
   const chartWidth = Math.max(categories.length * chartColumnWidth, 320);
 
-  const option = {
+  const option = useMemo(() => ({
     tooltip: {
       trigger: 'axis',
       axisPointer: {
@@ -91,7 +89,7 @@ const MonthlyOverviewChart: React.FC = () => {
       barGap: '0%',
       barCategoryGap: '10%',
     })),
-  };
+  }), [series, categories]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 mt-4">

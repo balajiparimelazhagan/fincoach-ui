@@ -81,7 +81,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             {/* Refresh */}
             <button
               onClick={handleRefresh}
-              className="w-9 h-9 flex items-center justify-center rounded-full active:bg-gray-100"
+              aria-label="Refresh dashboard"
+              className="w-11 h-11 flex items-center justify-center rounded-full active:bg-gray-100"
             >
               <IonIcon
                 icon={refreshOutline}
@@ -92,6 +93,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             {/* Month dropdown pill */}
             <button
               onClick={() => setShowPicker(true)}
+              aria-label="Select month"
+              aria-haspopup="listbox"
               className="flex items-center p-1.5! gap-1.5 border! border-gray-300! bg-white rounded-full rounded-lg! active:bg-gray-50"
             >
               {!isCurrentMonth && (

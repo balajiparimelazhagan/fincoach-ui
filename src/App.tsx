@@ -1,13 +1,7 @@
-import { IonApp, setupIonicReact } from '@ionic/react';
+import React, { Suspense } from 'react';
+import { IonApp, IonSpinner, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { Route, Redirect } from 'react-router-dom';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Transactions from './pages/Transactions';
-import Portfolio from './pages/Portfolio';
-import BillsCalendar from './pages/BillsCalendar';
-import Patterns from './pages/Patterns';
-import AddTransaction from './pages/AddTransaction';
 import { UserProvider } from './context/UserContext';
 
 /* Core CSS required for Ionic components to work properly */
@@ -18,7 +12,7 @@ import '@ionic/react/css/normalize.css';
 import '@ionic/react/css/structure.css';
 import '@ionic/react/css/typography.css';
 
-/* Optional CSS utils that can be commented out */
+/* Optional CSS utils */
 import '@ionic/react/css/padding.css';
 import '@ionic/react/css/float-elements.css';
 import '@ionic/react/css/text-alignment.css';
@@ -26,38 +20,46 @@ import '@ionic/react/css/text-transformation.css';
 import '@ionic/react/css/flex-utils.css';
 import '@ionic/react/css/display.css';
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
-
 /* Dark theme disabled - using light/white theme */
 /* import '@ionic/react/css/palettes/dark.always.css'; */
-/* import '@ionic/react/css/palettes/dark.class.css'; */
-/* import '@ionic/react/css/palettes/dark.system.css'; */
 
 /* Theme variables */
 import './theme/variables.css';
-import Insights from './pages/Insights';
+
+// ── Lazy-loaded pages (route-level code splitting) ───────────────────────────
+const Login          = React.lazy(() => import('./pages/Login'));
+const Dashboard      = React.lazy(() => import('./pages/Dashboard'));
+const Transactions   = React.lazy(() => import('./pages/Transactions'));
+const Insights       = React.lazy(() => import('./pages/Insights'));
+const BillsCalendar  = React.lazy(() => import('./pages/BillsCalendar'));
+const Patterns       = React.lazy(() => import('./pages/Patterns'));
+const Portfolio      = React.lazy(() => import('./pages/Portfolio'));
+const AddTransaction = React.lazy(() => import('./pages/AddTransaction'));
 
 setupIonicReact();
+
+const PageFallback: React.FC = () => (
+  <div className="flex items-center justify-center h-screen bg-white">
+    <IonSpinner name="dots" className="text-primary" />
+  </div>
+);
 
 const App: React.FC = () => {
   return (
     <IonApp>
       <UserProvider>
         <IonReactRouter>
-          <Route exact path="/login" component={Login} />
-          <Route exact path="/dashboard" component={Dashboard} />
-          <Route exact path="/transactions" component={Transactions} />
-          <Route exact path="/insights" component={Insights} />
-          <Route exact path="/bills" component={BillsCalendar} />
-          <Route exact path="/patterns" component={Patterns} />
-          <Route exact path="/portfolio" component={Portfolio} />
-          <Route exact path="/add-transaction" component={AddTransaction} />
-          <Route exact path="/" render={() => <Redirect to="/login" />} />
+          <Suspense fallback={<PageFallback />}>
+            <Route exact path="/login"           component={Login} />
+            <Route exact path="/dashboard"       component={Dashboard} />
+            <Route exact path="/transactions"    component={Transactions} />
+            <Route exact path="/insights"        component={Insights} />
+            <Route exact path="/bills"           component={BillsCalendar} />
+            <Route exact path="/patterns"        component={Patterns} />
+            <Route exact path="/portfolio"       component={Portfolio} />
+            <Route exact path="/add-transaction" component={AddTransaction} />
+            <Route exact path="/" render={() => <Redirect to="/login" />} />
+          </Suspense>
         </IonReactRouter>
       </UserProvider>
     </IonApp>
