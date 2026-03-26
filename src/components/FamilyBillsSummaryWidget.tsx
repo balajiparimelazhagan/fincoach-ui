@@ -42,7 +42,7 @@ const FamilyBillsSummaryWidget: React.FC<FamilyBillsSummaryWidgetProps> = ({ obl
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <IonIcon icon={receiptOutline} className="text-gray-600 text-base" />
-          <span className="text-sm font-semibold text-gray-800">Bills This Month</span>
+          <span className="text-sm font-semibold text-gray-800">Expense This Month</span>
         </div>
         <button
           onClick={() => history.push('/bills')}
@@ -54,12 +54,12 @@ const FamilyBillsSummaryWidget: React.FC<FamilyBillsSummaryWidgetProps> = ({ obl
 
       <div className="flex items-start gap-4 mb-3">
         <div>
-          <div className="text-xs text-gray-500 mb-0.5">Paid</div>
+          <div className="text-xs text-gray-500 mb-0.5">Spent</div>
           <div className="text-base font-bold text-green-600">{formatCurrency(paidTotal)}</div>
         </div>
         <div className="text-gray-300 mt-3">|</div>
         <div>
-          <div className="text-xs text-gray-500 mb-0.5">Remaining</div>
+          <div className="text-xs text-gray-500 mb-0.5">Due</div>
           <div className="text-base font-bold text-gray-800">{formatCurrency(remainingTotal)}</div>
         </div>
         {missed.length > 0 && (

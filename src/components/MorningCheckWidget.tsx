@@ -110,7 +110,7 @@ const MorningCheckWidget: React.FC<MorningCheckWidgetProps> = ({
         <span className="text-sm font-semibold text-gray-800">Today's Picture</span>
       </div>
       <div className="px-4 py-3 flex flex-col gap-2">
-        {items.map((item, idx) => {
+        {items.slice(0, 5).map((item, idx) => {
           const { icon, color } = iconMap[item.type];
           return (
             <div key={idx} className="flex items-start gap-2">

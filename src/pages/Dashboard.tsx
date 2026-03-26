@@ -170,6 +170,15 @@ const Dashboard: React.FC = () => {
       <IonContent fullscreen>
         <div className="p-5 pb-24 bg-gray-100 flex flex-col gap-5">
 
+          {/* Month Summary Card */}
+          {preferences?.dashboard?.show_income_expense && (
+            <MonthSummaryCard
+              income={incomeExpenseData?.income ?? 0}
+              expense={incomeExpenseData?.expense ?? 0}
+              month={monthLabel}
+            />
+          )}
+
           {/* Morning Check Widget — only show for current month */}
           {isCurrentMonth && (incomeExpenseData?.income || 0) + obligations.length > 0 && (
             <MorningCheckWidget
@@ -180,15 +189,9 @@ const Dashboard: React.FC = () => {
             />
           )}
 
-          {/* Month Summary Card */}
-          {preferences?.dashboard?.show_income_expense && (
-            <MonthSummaryCard
-              income={incomeExpenseData?.income ?? 0}
-              expense={incomeExpenseData?.expense ?? 0}
-              month={monthLabel}
-            />
-          )}
-
+          {/* Bills Summary */}
+          {isCurrentMonth && <FamilyBillsSummaryWidget obligations={obligations} />}
+          
           {/* This Week's Financial Picture — current month only */}
           {isCurrentMonth && <WeeklyPictureWidget obligations={obligations} />}
 
@@ -206,34 +209,8 @@ const Dashboard: React.FC = () => {
             />
           )}
 
-          {/* Bills Summary */}
-          {isCurrentMonth && <FamilyBillsSummaryWidget obligations={obligations} />}
-
-          {/* Bills */}
-          <div>
-            <div className="mb-2 px-1">
-              <span className="text-sm font-semibold text-gray-800">Upcoming Bills</span>
-            </div>
-            <Bills
-              obligations={expenseObligations}
-              isLoading={obligationsLoading}
-            />
-          </div>
-
-          {/* Expected Income (rental / salary) */}
-          {isCurrentMonth && <RentalIncomeWidget obligations={obligations} />}
-
           {/* Credit Cards */}
           <CreditCardWidget obligations={obligations} />
-
-          {/* Recent Transactions */}
-          {preferences?.dashboard?.show_transaction_list && (
-            <TransactionList
-              title="Recent transactions"
-              transactions={recentTransactions}
-              isLoading={transactionsLoading}
-            />
-          )}
         </div>
       </IonContent>
 
