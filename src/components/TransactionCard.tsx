@@ -72,7 +72,7 @@ const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, amo
 
   return (
     <>
-    <div className="flex items-center gap-4 p-3 my-0.5 py-2 rounded-xl bg-white">
+    <div className="flex items-center gap-4 p-3 my-0.5 py-1.5 rounded-xl bg-white">
       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-50 border border-gray-200 flex items-center justify-center">
         {avatarUrl ? (
           <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = '/default-profile-pic.png'; }} />
@@ -91,7 +91,7 @@ const TransactionCard: React.FC<TransactionCardProps> = ({ avatarUrl, title, amo
       </div>
 
       <div className="flex flex-col items-end">
-        <div className={`text font-semibold ${amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>{amountFormatted(amount)}</div>
+        <div className={`text-sm font-semibold ${amount >= 0 ? 'text-green-500' : 'text-red-500'}`}>{amountFormatted(amount)}</div>
       </div>
     </div>
     <div className="border-b border-gray-200 w-[90%] mx-auto"></div>

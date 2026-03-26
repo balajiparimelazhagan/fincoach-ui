@@ -61,8 +61,8 @@ const TransactionList: React.FC<TransactionListProps> = ({
   }
 
   return (
-    <div className="mt-5 mx-auto flex flex-col overflow-hidden max-w-90">
-      <span className="text pl-1 font-semibold text-primary">{title}</span>
+    <div className="mt-2 mx-auto flex flex-col overflow-hidden max-w-90">
+      <span className="text-sm pl-1 font-semibold text-primary">{title}</span>
       <div className="mt-1 border bg-white border-gray-200 rounded-xl ">
         {filteredTransactions.map((transaction) => (
           <div
