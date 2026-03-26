@@ -86,9 +86,11 @@ const Dashboard: React.FC = () => {
       try {
         const searchParams = new URLSearchParams(location.search);
         const token = searchParams.get('token');
+        const refreshToken = searchParams.get('refresh_token');
 
         if (token) {
           await userService.setAccessToken(token);
+          if (refreshToken) await userService.setRefreshToken(refreshToken);
           history.replace('/dashboard');
         }
 

@@ -115,7 +115,28 @@ class UserService {
   }
 
   /**
-   * Checks if user is authenticated
+   * Stores the refresh token in storage
+   */
+  async setRefreshToken(token: string): Promise<void> {
+    await storageService.set('refresh_token', token);
+  }
+
+  /**
+   * Retrieves the refresh token from storage
+   */
+  async getRefreshToken(): Promise<string | null> {
+    return await storageService.get('refresh_token');
+  }
+
+  /**
+   * Removes the refresh token from storage
+   */
+  async removeRefreshToken(): Promise<void> {
+    await storageService.remove('refresh_token');
+  }
+
+  /**
+   * Checks if user is authenticated (access OR refresh token present)
    */
   async isAuthenticated(): Promise<boolean> {
     const token = await this.getAccessToken();
@@ -123,10 +144,11 @@ class UserService {
   }
 
   /**
-   * Logs out the user
+   * Logs out the user — clears both tokens
    */
   async logout(): Promise<void> {
     await this.removeAccessToken();
+    await this.removeRefreshToken();
     window.location.href = '/login';
   }
 
