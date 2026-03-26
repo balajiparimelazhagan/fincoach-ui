@@ -15,6 +15,15 @@ export const formatCurrency = (amount: number): string => {
 };
 
 /**
+ * Format currency in compact denominations: ₹1.2L, ₹25.9K, ₹850
+ */
+export const formatCompactCurrency = (amount: number): string => {
+  if (amount >= 1_00_000) return `₹${(amount / 1_00_000).toFixed(1)}L`;
+  if (amount >= 1_000) return `₹${(amount / 1_000).toFixed(1)}K`;
+  return `₹${Math.round(amount)}`;
+};
+
+/**
  * Get color class based on transaction type
  */
 export const getAmountColor = (type: 'income' | 'expense' | 'saving'): string => {

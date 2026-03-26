@@ -34,6 +34,29 @@ export interface ComprehensiveStats extends SummaryStats {
 }
 
 /**
+ * Per-day cashflow summary (from /analytics/cashflow/daily-summary)
+ */
+export interface DailySummary {
+  day: number;
+  income: number;
+  expense: number;
+  predicted_bills: number;
+}
+
+/**
+ * Category budget item (from /analytics/cashflow/category-budgets)
+ */
+export interface CategoryBudget {
+  category_id: string | null;
+  category_name: string;
+  has_pattern: boolean;
+  current_actual: number;
+  avg_last_3_months: number;
+  over_budget: boolean;
+  over_amount: number;
+}
+
+/**
  * Stats Service
  */
 export const statsService = {
@@ -94,6 +117,29 @@ export const statsService = {
       : '/analytics/stats/comprehensive';
 
     const response = await api.get<ComprehensiveStats>(url);
+    return response.data;
+  },
+  /**
+   * Get per-day cashflow summary for a specific month
+   * @param year  Full year e.g. 2026
+   * @param month 1-indexed month (1=January … 12=December)
+   */
+  async getCashflowDailySummary(year: number, month: number): Promise<DailySummary[]> {
+    const response = await api.get<DailySummary[]>('/analytics/cashflow/daily-summary', {
+      params: { year, month },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get category spending vs 3-month historical average for the given month
+   * @param year  Full year e.g. 2026
+   * @param month 1-indexed month (1=January … 12=December)
+   */
+  async getCategoryBudgets(year: number, month: number): Promise<CategoryBudget[]> {
+    const response = await api.get<CategoryBudget[]>('/analytics/cashflow/category-budgets', {
+      params: { year, month },
+    });
     return response.data;
   },
 };

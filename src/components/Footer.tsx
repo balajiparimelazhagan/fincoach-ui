@@ -10,7 +10,7 @@ import { Link, useLocation } from 'react-router-dom';
 const NAV_ITEMS = [
   { to: '/dashboard', icon: null, isLogo: true, label: 'Home' },
   { to: '/transactions', icon: cashOutline, isLogo: false, label: 'Spends', rotate: true },
-  { to: '/bills', icon: calendarNumberOutline, isLogo: false, label: 'Bills', rotate: false },
+  { to: '/cashflow', icon: calendarNumberOutline, isLogo: false, label: 'Cashflow', rotate: false },
   { to: '/patterns', icon: repeatOutline, isLogo: false, label: 'Patterns', rotate: false },
   { to: '/insights', icon: pieChartOutline, isLogo: false, label: 'Insights', rotate: false },
 ];

@@ -31,7 +31,7 @@ const Login          = React.lazy(() => import('./pages/Login'));
 const Dashboard      = React.lazy(() => import('./pages/Dashboard'));
 const Transactions   = React.lazy(() => import('./pages/Transactions'));
 const Insights       = React.lazy(() => import('./pages/Insights'));
-const BillsCalendar  = React.lazy(() => import('./pages/BillsCalendar'));
+const Cashflow       = React.lazy(() => import('./pages/Cashflow'));
 const Patterns       = React.lazy(() => import('./pages/Patterns'));
 const Portfolio      = React.lazy(() => import('./pages/Portfolio'));
 const AddTransaction = React.lazy(() => import('./pages/AddTransaction'));
@@ -54,7 +54,7 @@ const App: React.FC = () => {
             <Route exact path="/dashboard"       component={Dashboard} />
             <Route exact path="/transactions"    component={Transactions} />
             <Route exact path="/insights"        component={Insights} />
-            <Route exact path="/bills"           component={BillsCalendar} />
+            <Route exact path="/cashflow"         component={Cashflow} />
             <Route exact path="/patterns"        component={Patterns} />
             <Route exact path="/portfolio"       component={Portfolio} />
             <Route exact path="/add-transaction" component={AddTransaction} />
