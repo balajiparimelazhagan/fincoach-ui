@@ -20,7 +20,12 @@ class CategoryService {
    */
   async getCategories(): Promise<Category[]> {
     const response = await api.get<Category[]>('/categories');
-    return response.data;
+    const seen = new Set<string>();
+    return response.data.filter(cat => {
+      if (seen.has(cat.label)) return false;
+      seen.add(cat.label);
+      return true;
+    });
   }
 
   /**

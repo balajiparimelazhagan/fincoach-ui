@@ -147,3 +147,17 @@ ion-button {
   font-weight: 600;
 }
 
+.search-bar, .sc-ion-searchbar-md-h {
+  --box-shadow: none !important;
+  --border-radius: 20px;
+  background: var(--color-gray-50);
+  color: #111827;
+  text-transform: none;
+  min-height: 20px;
+}
+
+.searchbar-input{
+  padding: 5px 50px !important;
+  font-size: small !important;
+  border: solid 1px #d1d5db !important;
+}

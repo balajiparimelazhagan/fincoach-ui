@@ -15,6 +15,12 @@ export const formatCurrency = (amount: number): string => {
 };
 
 /**
+ * Format currency amount in full INR format, no decimals
+ */
+export const formatFullCurrency = (amount: number): string =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+
+/**
  * Format currency in compact denominations: ₹1.2L, ₹25.9K, ₹850
  */
 export const formatCompactCurrency = (amount: number): string => {
