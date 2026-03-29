@@ -80,7 +80,7 @@ const UpcomingBillsList: React.FC<UpcomingBillsListProps> = ({ obligations }) =>
               </div>
 
               {/* Name */}
-              <div className="flex flex-col items-start min-w-0">
+              <div className="flex flex-col items-start min-w-0 mr-auto">
                 <p className="text-sm font-semibold text-gray-800 truncate">{name}</p>
                 {o.account && (
                   <p className="text-xs text-gray-400">

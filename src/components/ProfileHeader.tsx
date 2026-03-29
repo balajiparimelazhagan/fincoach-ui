@@ -1,33 +1,22 @@
 import { useState } from "react";
-import { IonHeader, IonToolbar, IonIcon, IonActionSheet } from "@ionic/react";
-import { refreshOutline, chevronDownOutline } from "ionicons/icons";
+import { IonHeader, IonToolbar, IonIcon } from "@ionic/react";
+import { cloudDownloadOutline, refreshOutline } from "ionicons/icons";
 import { useHistory } from "react-router-dom";
 import { UserProfile } from "../services/authService";
 import ProfileIcon from "./ProfileIcon";
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-];
 
 interface ProfileHeaderProps {
   userProfile: UserProfile | null;
-  selectedMonth: number;   // 0-indexed
-  selectedYear: number;
-  onMonthSelect: (year: number, month: number) => void;
-  onRefresh: () => void;
+  onSync: () => void;
 }
 
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   userProfile,
-  selectedMonth,
-  selectedYear,
-  onMonthSelect,
-  onRefresh,
+  onSync,
 }) => {
   const history = useHistory();
-  const [showPicker, setShowPicker] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [sync, setSync] = useState(false);
 
   const displayName = userProfile
     ? userProfile.name
@@ -35,10 +24,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       : userProfile.email.split("@")[0]
     : "User";
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    onRefresh();
-    setTimeout(() => setRefreshing(false), 800);
+  const handleSync = async () => {
+    setSync(true);
+    onSync();
+    setTimeout(() => setSync(false), 800);
   };
 
   // Build last 12 months for the action sheet
@@ -47,20 +36,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     return { year: d.getFullYear(), month: d.getMonth() };
   });
-
-  const isCurrentMonth =
-    selectedMonth === now.getMonth() && selectedYear === now.getFullYear();
-
-  const actionSheetButtons = [
-    ...monthOptions.map(opt => ({
-      text:
-        opt.month === now.getMonth() && opt.year === now.getFullYear()
-          ? `${MONTH_NAMES[opt.month]} ${opt.year}  ·  This month`
-          : `${MONTH_NAMES[opt.month]} ${opt.year}`,
-      handler: () => onMonthSelect(opt.year, opt.month),
-    })),
-    { text: 'Cancel', role: 'cancel' as const },
-  ];
 
   return (
     <>
@@ -80,43 +55,18 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
             {/* Refresh */}
             <button
-              onClick={handleRefresh}
+              onClick={handleSync}
               aria-label="Refresh dashboard"
-              className="w-11 h-11 flex items-center justify-center rounded-full active:bg-gray-100"
+              className="flex items-center justify-center mr-4"
             >
               <IonIcon
-                icon={refreshOutline}
-                className={`text-xl text-text-tertiary transition-transform duration-700 ${refreshing ? 'rotate-180' : ''}`}
+                icon={cloudDownloadOutline}
+                className={`w-7 h-7 text-primary text-text-tertiary transition-opacity ${sync ? 'opacity-50' : 'opacity-100'}`}
               />
-            </button>
-
-            {/* Month dropdown pill */}
-            <button
-              onClick={() => setShowPicker(true)}
-              aria-label="Select month"
-              aria-haspopup="listbox"
-              className="flex items-center p-1.5! gap-1.5 border! border-gray-300! bg-white rounded-full rounded-lg! active:bg-gray-50"
-            >
-              {!isCurrentMonth && (
-                <span className="text-xs font-semibold text-gray-800">
-                  {MONTH_NAMES[selectedMonth].slice(0, 3)} {selectedYear}
-                </span>
-              )}
-              {isCurrentMonth && (
-                <span className="text-xs text-primary font-semibold">· THIS MONTH</span>
-              )}
-              <IonIcon icon={chevronDownOutline} className="text-[11px] text-gray-400" />
             </button>
           </div>
         </IonToolbar>
       </IonHeader>
-
-      <IonActionSheet
-        isOpen={showPicker}
-        onDidDismiss={() => setShowPicker(false)}
-        header="Select month"
-        buttons={actionSheetButtons}
-      />
     </>
   );
 };

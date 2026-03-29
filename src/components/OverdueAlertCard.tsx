@@ -1,6 +1,8 @@
 import React from 'react';
 import { useHistory } from 'react-router-dom';
 import { PatternObligation, patternService } from '../services/patternService';
+import { optionsOutline } from 'ionicons/icons';
+import { IonIcon } from '@ionic/react';
 
 interface OverdueAlertCardProps {
   obligations: PatternObligation[];
@@ -25,7 +27,7 @@ const OverdueAlertCard: React.FC<OverdueAlertCardProps> = ({ obligations }) => {
 
   return (
     <div className="overflow-hidden">
-      {overdue.map(o => {
+      {overdue.slice(0, 3).map(o => {
         const daysOverdue = Math.abs(patternService.getDaysUntilDue(o));
         const amount = patternService.getExpectedAmount(o);
         const name = o.transactor?.label || o.transactor?.name || 'Unknown';
@@ -51,9 +53,9 @@ const OverdueAlertCard: React.FC<OverdueAlertCardProps> = ({ obligations }) => {
                 </p>
               </div>
             </div>
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <button className="text-red-500 font-bold">
+              <IonIcon icon={optionsOutline} />
+            </button>
           </div>
         );
       })}

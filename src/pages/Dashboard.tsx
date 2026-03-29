@@ -4,15 +4,12 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { userService } from '../services/userService';
 import { transactionService, Transaction } from '../services/transactionService';
 import { patternService, PatternObligation } from '../services/patternService';
-import { categoryService, Category } from '../services/categoryService';
+import { statsService } from '../services/statsService';
 import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
 import MonthSummaryCard from '../components/MonthSummaryCard';
 import CreditCardWidget from '../components/CreditCardWidget';
-import FamilyBillsSummaryWidget from '../components/FamilyBillsSummaryWidget';
-import NetBalanceWidget from '../components/NetBalanceWidget';
 import WeeklyPictureWidget from '../components/WeeklyPictureWidget';
-import UncategorisedTransactionWidget from '../components/UncategorisedTransactionWidget';
 import OverdueAlertCard from '../components/OverdueAlertCard';
 import UpcomingBillsList from '../components/UpcomingBillsList';
 import { useUser } from '../context/UserContext';
@@ -25,29 +22,16 @@ const MONTH_NAMES = [
 
 const Dashboard: React.FC = () => {
   const now = new Date();
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [incomeExpenseData, setIncomeExpenseData] = useState<{ income: number; expense: number } | null>(null);
-  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+  const [projectedData, setProjectedData] = useState<{ projected_income: number; projected_expense: number } | null>(null);
   const [obligations, setObligations] = useState<PatternObligation[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [dismissedTxIds, setDismissedTxIds] = useState<Set<string>>(new Set());
-  const [transactionsLoading, setTransactionsLoading] = useState(true);
-  const [obligationsLoading, setObligationsLoading] = useState(true);
 
   const history = useHistory();
   const location = useLocation();
   const { state: { profile, preferences, loading: userLoading } } = useUser();
-
-  const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
-
-  const handleMonthSelect = (year: number, month: number) => {
-    setSelectedYear(year);
-    setSelectedMonth(month);
-  };
 
   const fetchMonthData = useCallback(async (year: number, month: number) => {
     try {
@@ -60,23 +44,16 @@ const Dashboard: React.FC = () => {
 
   const fetchDashboardData = useCallback(async () => {
     if (!profile) return;
-    setTransactionsLoading(true);
-    setObligationsLoading(true);
     await Promise.all([
-      fetchMonthData(selectedYear, selectedMonth),
-      transactionService.getRecentTransactions(profile.id, 5)
-        .then(setRecentTransactions)
-        .catch(console.error)
-        .finally(() => setTransactionsLoading(false)),
+      fetchMonthData(now.getFullYear(), now.getMonth()),
+      statsService.getProjectedSummary(now.getFullYear(), now.getMonth() + 1)
+        .then(setProjectedData)
+        .catch(console.error),
       patternService.getUpcomingObligations(45)
         .then(setObligations)
-        .catch(console.error)
-        .finally(() => setObligationsLoading(false)),
-      categoryService.getCategories()
-        .then(setCategories)
         .catch(console.error),
     ]);
-  }, [profile, selectedYear, selectedMonth, fetchMonthData]);
+  }, [profile, fetchMonthData]);
 
   useEffect(() => {
     const handleTokenAndAuth = async () => {
@@ -110,21 +87,6 @@ const Dashboard: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
-  // Re-fetch totals when month changes
-  useEffect(() => {
-    if (!profile || isLoading) return;
-    fetchMonthData(selectedYear, selectedMonth);
-  }, [selectedYear, selectedMonth, profile, isLoading, fetchMonthData]);
-
-  const expenseObligations = obligations.filter(o => o.pattern?.direction === 'expense');
-  const monthLabel = `${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
-
-  const uncategorisedTx = recentTransactions.filter(
-    t => t.type === 'expense' && !t.category && Math.abs(t.amount) >= 5000
-  );
-  const visibleUncategorised = uncategorisedTx.filter(
-    t => !dismissedTxIds.has(t.id || t.transaction_id || '')
-  );
 
   if (isLoading || userLoading) {
     return (
@@ -158,14 +120,11 @@ const Dashboard: React.FC = () => {
     <IonPage>
       <ProfileHeader
         userProfile={profile}
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-        onMonthSelect={handleMonthSelect}
-        onRefresh={fetchDashboardData}
+        onSync={fetchDashboardData}
       />
 
       <IonContent fullscreen>
-        <div className="p-5 pb-24 bg-gray-100 flex flex-col gap-5">
+        <div className="p-5 pb-8 bg-gray-100 flex flex-col gap-3">
 
           {/* Overdue alerts */}
           <OverdueAlertCard obligations={obligations} />
@@ -175,33 +134,14 @@ const Dashboard: React.FC = () => {
             <MonthSummaryCard
               income={incomeExpenseData?.income ?? 0}
               expense={incomeExpenseData?.expense ?? 0}
-              month={monthLabel}
+              month={MONTH_NAMES[now.getMonth()]}
+              projectedIncome={projectedData?.projected_income}
+              projectedExpense={projectedData?.projected_expense}
             />
           )}
 
           {/* Upcoming bills */}
           <UpcomingBillsList obligations={obligations} />
-
-
-          {/* Bills Summary */}
-          {isCurrentMonth && <FamilyBillsSummaryWidget obligations={obligations} />}
-          
-          {/* This Week's Financial Picture — current month only */}
-          {isCurrentMonth && <WeeklyPictureWidget obligations={obligations} />}
-
-          {/* Family Accounts — Net Balance */}
-          {isCurrentMonth && <NetBalanceWidget />}
-
-          {/* Uncategorised large transactions */}
-          {isCurrentMonth && visibleUncategorised.length > 0 && (
-            <UncategorisedTransactionWidget
-              transactions={visibleUncategorised}
-              categories={categories}
-              onCategorised={txId =>
-                setDismissedTxIds(prev => new Set([...prev, txId]))
-              }
-            />
-          )}
 
           {/* Credit Cards */}
           <CreditCardWidget obligations={obligations} />

@@ -44,6 +44,14 @@ export interface DailySummary {
 }
 
 /**
+ * Projected income/expense from remaining EXPECTED obligations this month
+ */
+export interface ProjectedSummary {
+  projected_income: number;
+  projected_expense: number;
+}
+
+/**
  * Category budget item (from /analytics/cashflow/category-budgets)
  */
 export interface CategoryBudget {
@@ -138,6 +146,18 @@ export const statsService = {
    */
   async getCategoryBudgets(year: number, month: number): Promise<CategoryBudget[]> {
     const response = await api.get<CategoryBudget[]>('/analytics/cashflow/category-budgets', {
+      params: { year, month },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get projected income and expense from remaining EXPECTED obligations this month
+   * @param year  Full year e.g. 2026
+   * @param month 1-indexed month (1=January … 12=December)
+   */
+  async getProjectedSummary(year: number, month: number): Promise<ProjectedSummary> {
+    const response = await api.get<ProjectedSummary>('/analytics/cashflow/projected-summary', {
       params: { year, month },
     });
     return response.data;
