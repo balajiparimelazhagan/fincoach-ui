@@ -9,11 +9,12 @@ import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
 import MonthSummaryCard from '../components/MonthSummaryCard';
 import CreditCardWidget from '../components/CreditCardWidget';
-import MorningCheckWidget from '../components/MorningCheckWidget';
 import FamilyBillsSummaryWidget from '../components/FamilyBillsSummaryWidget';
 import NetBalanceWidget from '../components/NetBalanceWidget';
 import WeeklyPictureWidget from '../components/WeeklyPictureWidget';
 import UncategorisedTransactionWidget from '../components/UncategorisedTransactionWidget';
+import OverdueAlertCard from '../components/OverdueAlertCard';
+import UpcomingBillsList from '../components/UpcomingBillsList';
 import { useUser } from '../context/UserContext';
 import { getErrorMessage } from '../utils/errors';
 
@@ -166,6 +167,9 @@ const Dashboard: React.FC = () => {
       <IonContent fullscreen>
         <div className="p-5 pb-24 bg-gray-100 flex flex-col gap-5">
 
+          {/* Overdue alerts */}
+          <OverdueAlertCard obligations={obligations} />
+
           {/* Month Summary Card */}
           {preferences?.dashboard?.show_income_expense && (
             <MonthSummaryCard
@@ -175,15 +179,9 @@ const Dashboard: React.FC = () => {
             />
           )}
 
-          {/* Morning Check Widget — only show for current month */}
-          {isCurrentMonth && (incomeExpenseData?.income || 0) + obligations.length > 0 && (
-            <MorningCheckWidget
-              obligations={obligations}
-              recentTransactions={recentTransactions}
-              income={incomeExpenseData?.income ?? 0}
-              expense={incomeExpenseData?.expense ?? 0}
-            />
-          )}
+          {/* Upcoming bills */}
+          <UpcomingBillsList obligations={obligations} />
+
 
           {/* Bills Summary */}
           {isCurrentMonth && <FamilyBillsSummaryWidget obligations={obligations} />}

@@ -1,4 +1,5 @@
 import api from './api';
+import { Account } from './transactionService';
 
 export interface PatternTransactor {
   id: string;
@@ -40,6 +41,7 @@ export interface PatternObligation {
   fulfilled_by_transaction_id?: string;
   fulfilled_at?: string;
   days_early?: number;
+  account?: Account | null;
   pattern?: {
     id: string;
     direction: string;
