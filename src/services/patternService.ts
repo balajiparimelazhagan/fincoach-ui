@@ -37,7 +37,7 @@ export interface PatternObligation {
   tolerance_days: number;
   expected_min_amount?: number;
   expected_max_amount?: number;
-  status: 'EXPECTED' | 'FULFILLED' | 'MISSED' | 'CANCELLED';
+  status: 'EXPECTED' | 'FULFILLED' | 'MISSED' | 'CANCELLED' | 'SKIPPED';
   fulfilled_by_transaction_id?: string;
   fulfilled_at?: string;
   days_early?: number;
@@ -122,6 +122,34 @@ class PatternService {
     return obligations.sort(
       (a, b) => new Date(a.expected_date).getTime() - new Date(b.expected_date).getTime()
     );
+  }
+
+  /**
+   * Manually mark an obligation as fulfilled
+   */
+  async fulfillObligation(obligationId: string): Promise<void> {
+    await api.patch(`/patterns/obligations/${obligationId}/fulfill`);
+  }
+
+  /**
+   * Snooze an obligation by pushing its expected date forward
+   */
+  async snoozeObligation(obligationId: string, days = 7): Promise<void> {
+    await api.patch(`/patterns/obligations/${obligationId}/snooze`, { days });
+  }
+
+  /**
+   * Skip this occurrence of an obligation (not counted as paid or missed)
+   */
+  async skipObligation(obligationId: string): Promise<void> {
+    await api.patch(`/patterns/obligations/${obligationId}/skip`);
+  }
+
+  /**
+   * Delete a recurring pattern (and its obligations)
+   */
+  async deletePattern(patternId: string): Promise<void> {
+    await api.delete(`/patterns/${patternId}`);
   }
 
   /**

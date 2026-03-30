@@ -127,7 +127,7 @@ const Dashboard: React.FC = () => {
         <div className="p-5 pb-8 bg-gray-100 flex flex-col gap-3">
 
           {/* Overdue alerts */}
-          <OverdueAlertCard obligations={obligations} />
+          <OverdueAlertCard obligations={obligations} onRefresh={fetchDashboardData} />
 
           {/* Month Summary Card */}
           {preferences?.dashboard?.show_income_expense && (
