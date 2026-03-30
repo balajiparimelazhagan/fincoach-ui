@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { IonIcon, IonActionSheet } from '@ionic/react';
+import { IonIcon } from '@ionic/react';
+import { ellipsisVertical } from 'ionicons/icons';
 import { PatternObligation, patternService } from '../services/patternService';
-import {
-  ellipsisVertical,
-  checkmarkDoneOutline,
-  timerOutline,
-  playSkipForwardOutline,
-  closeOutline,
-} from 'ionicons/icons';
+import ObligationActionSheet from './ObligationActionSheet';
 
 interface OverdueAlertCardProps {
   obligations: PatternObligation[];
@@ -17,7 +12,7 @@ interface OverdueAlertCardProps {
 
 const OverdueAlertCard: React.FC<OverdueAlertCardProps> = ({ obligations, onRefresh }) => {
   const history = useHistory();
-  const [selectedObligation, setSelectedObligation] = useState<PatternObligation | null>(null);
+  const [selected, setSelected] = useState<PatternObligation | null>(null);
 
   const overdue = obligations.filter(o => {
     if (o.status === 'FULFILLED' || o.status === 'CANCELLED' || o.status === 'SKIPPED') return false;
@@ -65,10 +60,7 @@ const OverdueAlertCard: React.FC<OverdueAlertCardProps> = ({ obligations, onRefr
 
               <button
                 className="text-red-500 p-1"
-                onClick={e => {
-                  e.stopPropagation();
-                  setSelectedObligation(o);
-                }}
+                onClick={e => { e.stopPropagation(); setSelected(o); }}
               >
                 <IonIcon icon={ellipsisVertical} />
               </button>
@@ -77,50 +69,10 @@ const OverdueAlertCard: React.FC<OverdueAlertCardProps> = ({ obligations, onRefr
         })}
       </div>
 
-      <IonActionSheet
-        isOpen={!!selectedObligation}
-        onDidDismiss={() => setSelectedObligation(null)}
-        buttons={[
-          {
-            text: 'Mark as paid',
-            icon: checkmarkDoneOutline,
-            handler: async () => {
-              if (!selectedObligation) return;
-              try {
-                await patternService.fulfillObligation(selectedObligation.id);
-                onRefresh?.();
-              } catch (err) {
-                console.error('Failed to mark as paid', err);
-              }
-            },
-          },
-          {
-            text: 'Remind me later',
-            icon: timerOutline,
-            handler: async () => {
-              if (!selectedObligation) return;
-              try {
-                await patternService.snoozeObligation(selectedObligation.id, 7);
-                onRefresh?.();
-              } catch (err) {
-                console.error('Failed to snooze', err);
-              }
-            },
-          },
-          {
-            text: 'Skip this month',
-            icon: playSkipForwardOutline,
-            handler: async () => {
-              if (!selectedObligation) return;
-              try {
-                await patternService.skipObligation(selectedObligation.id);
-                onRefresh?.();
-              } catch (err) {
-                console.error('Failed to skip', err);
-              }
-            },
-          }
-        ]}
+      <ObligationActionSheet
+        obligation={selected}
+        onDismiss={() => setSelected(null)}
+        onRefresh={onRefresh}
       />
     </>
   );

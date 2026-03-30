@@ -146,7 +146,10 @@ const Cashflow: React.FC = () => {
                 onDayTap={handleDayTap}
               />
 
-              <UpcomingOwes obligations={monthObligations} />
+              <UpcomingOwes
+                  obligations={monthObligations}
+                  onRefresh={() => patternService.getUpcomingObligations(60).then(setObligations).catch(console.error)}
+                />
 
               <FlexibleSpending categories={variableCategories} />
             </>
