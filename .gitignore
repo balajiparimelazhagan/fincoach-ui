@@ -35,9 +35,6 @@ yarn-error.log*
 .ionic/
 www/
 
-# Android
-android/
-
 # IOS
 ios/
 

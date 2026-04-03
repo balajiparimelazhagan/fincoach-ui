@@ -1,11 +1,41 @@
 import { IonButton, IonContent, IonIcon, IonPage, IonSpinner } from '@ionic/react';
 import { logoGoogle } from 'ionicons/icons';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useHistory } from 'react-router';
+import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
 import { userService } from '../services/userService';
+import authService from '../services/authService';
 
 const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const history = useHistory();
+
+  useEffect(() => {
+    const listener = App.addListener('appUrlOpen', async ({ url }) => {
+      if (url.startsWith('io.ionic.starter://auth/callback')) {
+        await Browser.close();
+        const params = new URLSearchParams(url.split('?')[1]);
+        const token = params.get('token');
+        const refreshToken = params.get('refresh_token');
+        if (token) {
+          await authService.setAccessToken(token);
+          if (refreshToken) {
+            await authService.setRefreshToken(refreshToken);
+          }
+          history.replace('/dashboard');
+        } else {
+          setError('Authentication failed: no token received');
+        }
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      listener.then(l => l.remove());
+    };
+  }, [history]);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -13,9 +43,7 @@ const Login: React.FC = () => {
 
     try {
       const { authorization_url } = await userService.initiateGoogleSignIn();
-      
-      // Redirect to Google's authorization page
-      window.location.href = authorization_url;
+      await Browser.open({ url: authorization_url });
     } catch (err) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
       setError(detail ?? 'Failed to initiate Google sign-in');
@@ -63,4 +91,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-

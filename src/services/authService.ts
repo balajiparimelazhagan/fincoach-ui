@@ -70,6 +70,10 @@ class AuthService {
     await storageService.remove('access_token');
   }
 
+  async setRefreshToken(token: string): Promise<void> {
+    await storageService.set('refresh_token', token);
+  }
+
   /**
    * Checks if user is authenticated
    * @returns True if access token exists

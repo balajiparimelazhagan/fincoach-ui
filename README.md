@@ -83,6 +83,32 @@ npx cap open ios
 npx cap open android
 ```
 
+## 📦 Export APK
+
+### Option A — Android Studio (recommended)
+
+```bash
+npx cap open android
+```
+
+Then in Android Studio: **Build → Build Bundle(s) / APK(s) → Build APK(s)**
+
+Output: `android/app/build/outputs/apk/debug/app-debug.apk`
+
+### Option B — Command line
+
+```bash
+cd android
+
+# Debug APK
+./gradlew assembleDebug
+
+# Release APK (requires signing)
+./gradlew assembleRelease
+```
+
+Output: `android/app/build/outputs/apk/debug/app-debug.apk`
+
 ## 🎨 Styling
 
 This project uses **Tailwind CSS v4** alongside Ionic's built-in components. You can use Tailwind utility classes directly:

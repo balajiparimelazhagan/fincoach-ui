@@ -4,6 +4,7 @@ interface StatItemProps {
   label: string;
   value: number | string;
   color?: string;
+  icon?: string;
 }
 
 const StatItem: React.FC<StatItemProps> = ({ label, value, color = '#34D399' }) => {
