@@ -4,6 +4,7 @@ import { IonIcon } from '@ionic/react';
 import { ellipsisVertical } from 'ionicons/icons';
 import { PatternObligation, patternService } from '../services/patternService';
 import ObligationActionSheet from './ObligationActionSheet';
+import MarkAsPaidDrawer from './MarkAsPaidDrawer';
 
 interface OverdueAlertCardProps {
   obligations: PatternObligation[];
@@ -13,6 +14,7 @@ interface OverdueAlertCardProps {
 const OverdueAlertCard: React.FC<OverdueAlertCardProps> = ({ obligations, onRefresh }) => {
   const history = useHistory();
   const [selected, setSelected] = useState<PatternObligation | null>(null);
+  const [payObligation, setPayObligation] = useState<PatternObligation | null>(null);
 
   const overdue = obligations.filter(o => {
     if (o.status === 'FULFILLED' || o.status === 'CANCELLED' || o.status === 'SKIPPED') return false;
@@ -73,6 +75,13 @@ const OverdueAlertCard: React.FC<OverdueAlertCardProps> = ({ obligations, onRefr
         obligation={selected}
         onDismiss={() => setSelected(null)}
         onRefresh={onRefresh}
+        onMarkAsPaid={o => { setSelected(null); setPayObligation(o); }}
+      />
+
+      <MarkAsPaidDrawer
+        obligation={payObligation}
+        onDismiss={() => setPayObligation(null)}
+        onSuccess={() => { setPayObligation(null); onRefresh?.(); }}
       />
     </>
   );

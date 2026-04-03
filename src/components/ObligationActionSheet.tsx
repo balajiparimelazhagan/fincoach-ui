@@ -11,12 +11,15 @@ interface ObligationActionSheetProps {
   obligation: PatternObligation | null;
   onDismiss: () => void;
   onRefresh?: () => void;
+  /** When provided, "Mark as paid" calls this instead of fulfilling directly */
+  onMarkAsPaid?: (obligation: PatternObligation) => void;
 }
 
 const ObligationActionSheet: React.FC<ObligationActionSheetProps> = ({
   obligation,
   onDismiss,
   onRefresh,
+  onMarkAsPaid,
 }) => {
   return (
     <IonActionSheet
@@ -26,13 +29,14 @@ const ObligationActionSheet: React.FC<ObligationActionSheetProps> = ({
         {
           text: 'Mark as paid',
           icon: checkmarkDoneOutline,
-          handler: async () => {
+          handler: () => {
             if (!obligation) return;
-            try {
-              await patternService.fulfillObligation(obligation.id);
-              onRefresh?.();
-            } catch (err) {
-              console.error('Failed to mark as paid', err);
+            if (onMarkAsPaid) {
+              onMarkAsPaid(obligation);
+            } else {
+              patternService.fulfillObligation(obligation.id)
+                .then(() => onRefresh?.())
+                .catch(err => console.error('Failed to mark as paid', err));
             }
           },
         },

@@ -23,13 +23,13 @@ const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({
   // What fraction of total expected income is still to come (0–100)
   const projectedIncomePercent =
     projectedIncome > 0
-      ? Math.min(100, Math.round((projectedIncome / (income + projectedIncome)) * 100))
+      ? Math.min(100, Math.round((income / (income + projectedIncome)) * 100))
       : 0;
 
   // What fraction of total expected expense is still to come (0–100)
   const projectedExpensePercent =
     projectedExpense > 0
-      ? Math.min(100, Math.round((projectedExpense / (expense + projectedExpense)) * 100))
+      ? Math.min(100, Math.round((expense / (expense + projectedExpense)) * 100))
       : 0;
 
   const fmt = (n: number) =>
@@ -39,12 +39,10 @@ const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({
       maximumFractionDigits: 0,
     }).format(n);
 
-  const progressColor =
-    spentPercent >= 90
-      ? 'bg-red-500'
-      : spentPercent >= 70
-      ? 'bg-amber-500'
-      : 'bg-primary';
+  const barColor = (pct: number) =>
+    pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-primary';
+
+  const progressColor = barColor(spentPercent);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -109,42 +107,26 @@ const MonthSummaryCard: React.FC<MonthSummaryCardProps> = ({
       )}
 
 
-      {projectedIncome > 0 && (
-        <>
-          <div className='uppercase text-xs font-semibold text-gray-400 my-2'>Projected income</div>
-          <div>
-            <div className="w-full bg-gray-100 rounded-full h-2 mb-1.5">
-              <div
-                className="h-2 rounded-full transition-all bg-green-400"
-                style={{ width: `${projectedIncomePercent}%` }}
-              />
+      {[
+        { label: 'Projected income', amount: projectedIncome, pct: projectedIncomePercent, noun: 'income' },
+        { label: 'Projected expense', amount: projectedExpense, pct: projectedExpensePercent, noun: 'expense' },
+      ].map(({ label, amount, pct, noun }) =>
+        amount > 0 ? (
+          <React.Fragment key={noun}>
+            <div className='uppercase text-xs font-semibold text-gray-400 my-2'>{label}</div>
+            <div>
+              <div className="w-full bg-gray-100 rounded-full h-2 mb-1.5">
+                <div
+                  className={`h-2 rounded-full transition-all ${barColor(pct)}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-400">{fmt(amount)} of {noun} yet to come</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-400">
-                {fmt(projectedIncome)} of income yet to come
-              </span>
-            </div>
-          </div>
-        </>
-      )}
-
-      {projectedExpense > 0 && (
-        <>
-          <div className='uppercase text-xs font-semibold text-gray-400 my-2'>Projected expense</div>
-          <div>
-            <div className="w-full bg-gray-100 rounded-full h-2 mb-1.5">
-              <div
-                className="h-2 rounded-full transition-all bg-orange-400"
-                style={{ width: `${projectedExpensePercent}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-gray-400">
-                {fmt(projectedExpense)} of expense yet to come
-              </span>
-            </div>
-          </div>
-        </>
+          </React.Fragment>
+        ) : null
       )}
 
       {/* Empty state */}

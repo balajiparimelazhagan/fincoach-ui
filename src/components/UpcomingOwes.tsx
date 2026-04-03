@@ -4,6 +4,7 @@ import { checkmarkCircle, alertCircle, timeOutline, chevronDownOutline, chevronU
 import { patternService, PatternObligation } from '../services/patternService';
 import { formatFullCurrency } from '../utils/transactionFormatters';
 import ObligationActionSheet from './ObligationActionSheet';
+import MarkAsPaidDrawer from './MarkAsPaidDrawer';
 
 interface UpcomingOwesProps {
   obligations: PatternObligation[];
@@ -16,6 +17,7 @@ const VISIBLE_COUNT = 5;
 const UpcomingOwes: React.FC<UpcomingOwesProps> = ({ obligations, onRefresh }) => {
   const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState<PatternObligation | null>(null);
+  const [payObligation, setPayObligation] = useState<PatternObligation | null>(null);
 
   const fulfilled = obligations.filter(o => o.status === 'FULFILLED' || o.status === 'SKIPPED').length;
   const total = obligations.length;
@@ -126,6 +128,13 @@ const UpcomingOwes: React.FC<UpcomingOwesProps> = ({ obligations, onRefresh }) =
         obligation={selected}
         onDismiss={() => setSelected(null)}
         onRefresh={onRefresh}
+        onMarkAsPaid={o => { setSelected(null); setPayObligation(o); }}
+      />
+
+      <MarkAsPaidDrawer
+        obligation={payObligation}
+        onDismiss={() => setPayObligation(null)}
+        onSuccess={() => { setPayObligation(null); onRefresh?.(); }}
       />
     </>
   );

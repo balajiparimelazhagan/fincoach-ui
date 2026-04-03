@@ -125,10 +125,11 @@ class PatternService {
   }
 
   /**
-   * Manually mark an obligation as fulfilled
+   * Manually mark an obligation as fulfilled.
+   * Pass transactionId to link it to a specific transaction.
    */
-  async fulfillObligation(obligationId: string): Promise<void> {
-    await api.patch(`/patterns/obligations/${obligationId}/fulfill`);
+  async fulfillObligation(obligationId: string, transactionId?: string): Promise<void> {
+    await api.patch(`/patterns/obligations/${obligationId}/fulfill`, transactionId ? { transaction_id: transactionId } : undefined);
   }
 
   /**
