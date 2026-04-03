@@ -2,14 +2,13 @@ import { IonContent, IonPage, IonSpinner, IonText } from '@ionic/react';
 import { useEffect, useState, useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import { userService } from '../services/userService';
-import { transactionService, Transaction } from '../services/transactionService';
+import { transactionService } from '../services/transactionService';
 import { patternService, PatternObligation } from '../services/patternService';
 import { statsService } from '../services/statsService';
 import ProfileHeader from '../components/ProfileHeader';
 import Footer from '../components/Footer';
 import MonthSummaryCard from '../components/MonthSummaryCard';
 import CreditCardWidget from '../components/CreditCardWidget';
-import WeeklyPictureWidget from '../components/WeeklyPictureWidget';
 import OverdueAlertCard from '../components/OverdueAlertCard';
 import UpcomingBillsList from '../components/UpcomingBillsList';
 import { useUser } from '../context/UserContext';
@@ -74,7 +73,6 @@ const Dashboard: React.FC = () => {
           return;
         }
 
-        await fetchDashboardData();
         setIsLoading(false);
       } catch (err) {
         console.error('Dashboard initialization error:', err);
@@ -86,6 +84,12 @@ const Dashboard: React.FC = () => {
     handleTokenAndAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
+
+  useEffect(() => {
+    if (profile) {
+      fetchDashboardData();
+    }
+  }, [profile, fetchDashboardData]);
 
 
   if (isLoading || userLoading) {
