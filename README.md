@@ -109,6 +109,48 @@ cd android
 
 Output: `android/app/build/outputs/apk/debug/app-debug.apk`
 
+## 🐳 Connecting to Docker Backend
+
+### Local Development (Emulator)
+
+```
+VITE_API_BASE_URL=http://localhost:8000/api/v1
+```
+
+After the emulator finishes booting, run once per session:
+
+```bash
+~/Library/Android/sdk/platform-tools/adb reverse tcp:8000 tcp:8000
+```
+
+This forwards `localhost:8000` on the emulator to your host machine where Docker is running. You do **not** need to re-run this when restarting Android Studio — only when the emulator cold boots.
+
+> **First time setup** — add ADB to your PATH permanently:
+> ```bash
+> echo 'export ANDROID_HOME=$HOME/Library/Android/sdk' >> ~/.zshrc
+> echo 'export PATH=$PATH:$ANDROID_HOME/platform-tools' >> ~/.zshrc
+> source ~/.zshrc
+> ```
+
+### Production
+
+Create a `.env.production` file with your real API URL:
+
+```
+VITE_API_BASE_URL=https://api.yourapp.com/api/v1
+```
+
+Then build — Vite automatically picks up `.env.production`:
+
+```bash
+npm run build
+npx cap sync android
+```
+
+No `adb reverse` needed in production — the app connects directly to the public URL.
+
+---
+
 ## 🎨 Styling
 
 This project uses **Tailwind CSS v4** alongside Ionic's built-in components. You can use Tailwind utility classes directly:

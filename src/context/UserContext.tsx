@@ -122,11 +122,11 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
           type: 'SET_PREFERENCES',
           payload: {
             dashboard: {
-              show_ai_suggestions: false,
-              show_budget_summary: false,
-              show_income_expense: false,
-              show_transaction_list: false,
-              show_category_breakdown: false
+              show_ai_suggestions: true,
+              show_budget_summary: true,
+              show_income_expense: true,
+              show_transaction_list: true,
+              show_category_breakdown: true
             }
           }
         });

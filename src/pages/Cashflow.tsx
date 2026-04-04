@@ -14,6 +14,7 @@ import FlexibleSpending from '../components/FlexibleSpending';
 import DayTransactionModal from '../components/DayTransactionModal';
 import BudgetTable from '../components/BudgetTable';
 import AddBudgetItemDrawer from '../components/AddBudgetItemDrawer';
+import MarkAsPaidDrawer from '../components/MarkAsPaidDrawer';
 import { patternService, PatternObligation } from '../services/patternService';
 import { statsService, DailySummary, CategoryBudget } from '../services/statsService';
 import { transactionService, Transaction } from '../services/transactionService';
@@ -53,8 +54,9 @@ const Cashflow: React.FC = () => {
   const [dayTransactions, setDayTransactions] = useState<Transaction[]>([]);
   const [dayLoading,      setDayLoading]      = useState(false);
 
-  const [drawerOpen,    setDrawerOpen]    = useState(false);
-  const [drawerSection, setDrawerSection] = useState<BudgetSection>('bills');
+  const [drawerOpen,      setDrawerOpen]      = useState(false);
+  const [drawerSection,   setDrawerSection]   = useState<BudgetSection>('bills');
+  const [payObligation,   setPayObligation]   = useState<PatternObligation | null>(null);
 
   const [monthsCoverage, setMonthsCoverage] = useState<number>(() => {
     const saved = localStorage.getItem(COVERAGE_KEY);
@@ -289,6 +291,7 @@ const Cashflow: React.FC = () => {
                 onMonthsCoverageChange={handleMonthsCoverageChange}
                 onAddItem={handleAddItem}
                 onDeleteItem={handleDeleteItem}
+                onObligationClick={isCurrentMonth ? setPayObligation : undefined}
               />
             )
           )}
@@ -302,6 +305,12 @@ const Cashflow: React.FC = () => {
           transactions={dayTransactions}
           isLoading={dayLoading}
           onClose={closeModal}
+        />
+
+        <MarkAsPaidDrawer
+          obligation={payObligation}
+          onDismiss={() => setPayObligation(null)}
+          onSuccess={() => { setPayObligation(null); reloadObligations(); }}
         />
 
         <AddBudgetItemDrawer
