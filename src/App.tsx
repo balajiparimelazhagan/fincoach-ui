@@ -33,6 +33,7 @@ const Transactions   = React.lazy(() => import('./pages/Transactions'));
 const Insights       = React.lazy(() => import('./pages/Insights'));
 const Cashflow       = React.lazy(() => import('./pages/Cashflow'));
 const Patterns       = React.lazy(() => import('./pages/Patterns'));
+const Budget         = React.lazy(() => import('./pages/Budget'));
 const Portfolio      = React.lazy(() => import('./pages/Portfolio'));
 
 setupIonicReact();
@@ -54,6 +55,7 @@ const App: React.FC = () => {
             <Route exact path="/transactions"    component={Transactions} />
             <Route exact path="/insights"        component={Insights} />
             <Route exact path="/cashflow"         component={Cashflow} />
+            <Route exact path="/budget"          component={Budget} />
             <Route exact path="/patterns"        component={Patterns} />
             <Route exact path="/portfolio"       component={Portfolio} />
             <Route exact path="/" render={() => <Redirect to="/login" />} />
