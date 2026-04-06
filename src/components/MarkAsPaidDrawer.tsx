@@ -8,7 +8,7 @@ import { accountService, Account } from '../services/accountService';
 interface MarkAsPaidDrawerProps {
   obligation: PatternObligation | null;
   onDismiss: () => void;
-  onSuccess: () => void;
+  onSuccess: (obligationId: string) => void;
 }
 
 const fmt = (n: number) =>
@@ -107,8 +107,9 @@ const MarkAsPaidDrawer: React.FC<MarkAsPaidDrawerProps> = ({ obligation, onDismi
       await patternService.fulfillObligation(obligation.id, transactionId);
       setToastColor('success');
       setToastMsg('Marked as paid!');
+      const fulfilledId = obligation.id;
       onDismiss();
-      setTimeout(onSuccess, 400);
+      setTimeout(() => onSuccess(fulfilledId), 400);
     } catch (err) {
       setToastColor('danger');
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;

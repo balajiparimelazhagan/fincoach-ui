@@ -32,31 +32,31 @@ type ViewMode = 'calendar' | 'budget';
 const Cashflow: React.FC = () => {
   const history = useHistory();
   const now = new Date();
-  const [selectedYear,  setSelectedYear]  = useState(now.getFullYear());
+  const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed
 
   const isCurrentMonth = selectedYear === now.getFullYear() && selectedMonth === now.getMonth();
-  const isFutureMonth  = selectedYear > now.getFullYear() ||
+  const isFutureMonth = selectedYear > now.getFullYear() ||
     (selectedYear === now.getFullYear() && selectedMonth > now.getMonth());
 
   // For current month: allow toggling. For future months: always budget.
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const effectiveView: ViewMode = isFutureMonth ? 'budget' : viewMode;
 
-  const [dailySummary,    setDailySummary]    = useState<DailySummary[]>([]);
-  const [dailyLoading,    setDailyLoading]    = useState(true);
-  const [obligations,     setObligations]     = useState<PatternObligation[]>([]);
+  const [dailySummary, setDailySummary] = useState<DailySummary[]>([]);
+  const [dailyLoading, setDailyLoading] = useState(true);
+  const [obligations, setObligations] = useState<PatternObligation[]>([]);
   const [categoryBudgets, setCategoryBudgets] = useState<CategoryBudget[]>([]);
-  const [customItems,     setCustomItems]     = useState<CustomBudgetItem[]>([]);
-  const [staticLoading,   setStaticLoading]   = useState(true);
+  const [customItems, setCustomItems] = useState<CustomBudgetItem[]>([]);
+  const [staticLoading, setStaticLoading] = useState(true);
 
-  const [selectedDay,     setSelectedDay]     = useState<number | null>(null);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [dayTransactions, setDayTransactions] = useState<Transaction[]>([]);
-  const [dayLoading,      setDayLoading]      = useState(false);
+  const [dayLoading, setDayLoading] = useState(false);
 
-  const [drawerOpen,      setDrawerOpen]      = useState(false);
-  const [drawerSection,   setDrawerSection]   = useState<BudgetSection>('bills');
-  const [payObligation,   setPayObligation]   = useState<PatternObligation | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerSection, setDrawerSection] = useState<BudgetSection>('bills');
+  const [payObligation, setPayObligation] = useState<PatternObligation | null>(null);
 
   const [monthsCoverage, setMonthsCoverage] = useState<number>(() => {
     const saved = localStorage.getItem(COVERAGE_KEY);
@@ -105,10 +105,10 @@ const Cashflow: React.FC = () => {
     setDayTransactions([]);
     try {
       const dateFrom = new Date(selectedYear, selectedMonth, day);
-      const dateTo   = new Date(selectedYear, selectedMonth, day, 23, 59, 59);
+      const dateTo = new Date(selectedYear, selectedMonth, day, 23, 59, 59);
       const response = await transactionService.getTransactions({
         date_from: dateFrom.toISOString(),
-        date_to:   dateTo.toISOString(),
+        date_to: dateTo.toISOString(),
         limit: 50,
       });
       setDayTransactions(response.items);
@@ -159,7 +159,7 @@ const Cashflow: React.FC = () => {
   // Navigate to standalone Budget page for next month
   const openNextMonthBudget = () => {
     const nextMonth = selectedMonth === 11 ? 0 : selectedMonth + 1;
-    const nextYear  = selectedMonth === 11 ? selectedYear + 1 : selectedYear;
+    const nextYear = selectedMonth === 11 ? selectedYear + 1 : selectedYear;
     history.push(`/budget?year=${nextYear}&month=${nextMonth + 1}`);
   };
 
@@ -167,7 +167,7 @@ const Cashflow: React.FC = () => {
     <IonPage>
       <IonHeader className="ion-no-border border-b border-gray-200">
         <IonToolbar>
-          <div className="flex items-center gap-2 px-4 py-3">
+          <div className="flex items-center gap-2 px-4! py-3!">
             <IonIcon
               icon={effectiveView === 'budget' ? listOutline : calendarOutline}
               className="text-primary text-xl"
@@ -213,22 +213,20 @@ const Cashflow: React.FC = () => {
                 <div className="flex bg-gray-100 rounded-full p-0.5">
                   <button
                     onClick={() => setViewMode('calendar')}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                      effectiveView === 'calendar'
-                        ? 'bg-white text-primary shadow-sm'
-                        : 'text-gray-500'
-                    }`}
+                    className={`flex items-center gap-1 px-3! py-1! rounded-full! text-xs font-semibold transition-all ${effectiveView === 'calendar'
+                      ? 'bg-white text-primary shadow-sm'
+                      : 'text-gray-500'
+                      }`}
                   >
                     <IonIcon icon={calendarOutline} className="text-sm" />
                     Calendar
                   </button>
                   <button
                     onClick={() => setViewMode('budget')}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold transition-all ${
-                      effectiveView === 'budget'
-                        ? 'bg-white text-primary shadow-sm'
-                        : 'text-gray-500'
-                    }`}
+                    className={`flex items-center gap-1 px-3! py-1! rounded-full! text-xs font-semibold transition-all ${effectiveView === 'budget'
+                      ? 'bg-white text-primary shadow-sm'
+                      : 'text-gray-500'
+                      }`}
                   >
                     <IonIcon icon={listOutline} className="text-sm" />
                     Budget
@@ -263,11 +261,15 @@ const Cashflow: React.FC = () => {
                   year={selectedYear}
                   month={selectedMonth}
                   dailyMap={dailyMap}
+                  obligations={monthObligations}
                   onDayTap={handleDayTap}
                 />
                 <UpcomingOwes
                   obligations={monthObligations}
                   onRefresh={reloadObligations}
+                  onObligationFulfilled={(id) =>
+                    setObligations(prev => prev.map(o => o.id === id ? { ...o, status: 'FULFILLED' } : o))
+                  }
                 />
                 <FlexibleSpending categories={variableCategories} />
               </>
@@ -310,7 +312,11 @@ const Cashflow: React.FC = () => {
         <MarkAsPaidDrawer
           obligation={payObligation}
           onDismiss={() => setPayObligation(null)}
-          onSuccess={() => { setPayObligation(null); reloadObligations(); }}
+          onSuccess={(obligationId) => {
+            setObligations(prev =>
+              prev.map(o => o.id === obligationId ? { ...o, status: 'FULFILLED' } : o)
+            );
+          }}
         />
 
         <AddBudgetItemDrawer

@@ -56,18 +56,18 @@ interface SectionConfig {
 }
 
 const SECTIONS: SectionConfig[] = [
-  { key: 'income',   label: 'Income',               icon: trendingUpOutline,   iconColor: 'text-green-600', headerBg: 'bg-green-50' },
-  { key: 'bills',    label: 'Bills & EMIs',          icon: trendingDownOutline, iconColor: 'text-red-500',   headerBg: 'bg-red-50' },
-  { key: 'savings',  label: 'Savings & Investments', icon: saveOutline,         iconColor: 'text-blue-600',  headerBg: 'bg-blue-50' },
-  { key: 'flexible', label: 'Flexible Spending',     icon: flashOutline,        iconColor: 'text-amber-500', headerBg: 'bg-amber-50' },
+  { key: 'income', label: 'Income', icon: trendingUpOutline, iconColor: 'text-green-600', headerBg: 'bg-gray-50' },
+  { key: 'bills', label: 'Bills & EMIs', icon: trendingDownOutline, iconColor: 'text-red-500', headerBg: 'bg-gray-50' },
+  { key: 'savings', label: 'Savings & Investments', icon: saveOutline, iconColor: 'text-blue-600', headerBg: 'bg-gray-50' },
+  { key: 'flexible', label: 'Flexible Spending', icon: flashOutline, iconColor: 'text-amber-500', headerBg: 'bg-gray-50' },
 ];
 
 // ── Row types ────────────────────────────────────────────────────────────────
 
 type ObligationRow = { kind: 'obligation'; obligation: PatternObligation; done: boolean; amount: number; dateLabel: string; name: string };
-type FlexibleRow   = { kind: 'flexible';   budget: CategoryBudget;       done: boolean; amount: number; actual: number };
-type CustomRow     = { kind: 'custom';     item: CustomBudgetItem;       dateLabel: string };
-type BudgetRow     = ObligationRow | FlexibleRow | CustomRow;
+type FlexibleRow = { kind: 'flexible'; budget: CategoryBudget; done: boolean; amount: number; actual: number };
+type CustomRow = { kind: 'custom'; item: CustomBudgetItem; dateLabel: string };
+type BudgetRow = ObligationRow | FlexibleRow | CustomRow;
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -92,8 +92,8 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
   // ── Row builders ────────────────────────────────────────────────────────
 
   const incomeObligations = obligations.filter(o => o.pattern?.direction === 'income');
-  const billObligations   = obligations.filter(o => o.pattern?.direction === 'expense');
-  const customBySection   = (s: BudgetSection) => customItems.filter(i => i.section === s);
+  const billObligations = obligations.filter(o => o.pattern?.direction === 'expense');
+  const customBySection = (s: BudgetSection) => customItems.filter(i => i.section === s);
 
   const obligationRows = (obs: PatternObligation[]): ObligationRow[] =>
     obs.map(o => ({
@@ -125,23 +125,23 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
 
   const rowsForSection = (key: BudgetSection): BudgetRow[] => {
     switch (key) {
-      case 'income':   return [...obligationRows(incomeObligations), ...customRows('income')];
-      case 'bills':    return [...obligationRows(billObligations),   ...customRows('bills')];
-      case 'savings':  return customRows('savings');
-      case 'flexible': return [...flexibleRows(),                    ...customRows('flexible')];
+      case 'income': return [...obligationRows(incomeObligations), ...customRows('income')];
+      case 'bills': return [...obligationRows(billObligations), ...customRows('bills')];
+      case 'savings': return customRows('savings');
+      case 'flexible': return [...flexibleRows(), ...customRows('flexible')];
     }
   };
 
   // ── Totals ────────────────────────────────────────────────────────────────
 
-  const totalBills    = billObligations.reduce((s, o) => s + patternService.getExpectedAmount(o), 0)
+  const totalBills = billObligations.reduce((s, o) => s + patternService.getExpectedAmount(o), 0)
     + customBySection('bills').reduce((s, i) => s + i.amount, 0);
-  const totalSavings  = customBySection('savings').reduce((s, i) => s + i.amount, 0);
+  const totalSavings = customBySection('savings').reduce((s, i) => s + i.amount, 0);
   const totalFlexible = categoryBudgets.filter(c => !c.has_pattern).reduce((s, c) => s + c.avg_last_3_months, 0)
     + customBySection('flexible').reduce((s, i) => s + i.amount, 0);
-  const totalIncome   = incomeObligations.reduce((s, o) => s + patternService.getExpectedAmount(o), 0)
+  const totalIncome = incomeObligations.reduce((s, o) => s + patternService.getExpectedAmount(o), 0)
     + customBySection('income').reduce((s, i) => s + i.amount, 0);
-  const totalExpense  = totalBills + totalSavings + totalFlexible;
+  const totalExpense = totalBills + totalSavings + totalFlexible;
   const emergencyFund = totalExpense * monthsCoverage;
 
   // ── Delete ────────────────────────────────────────────────────────────────
@@ -160,16 +160,16 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
       <tr
         key={row.obligation.id}
         onClick={clickable ? () => onObligationClick!(row.obligation) : undefined}
-        className={`border-b border-gray-100 transition-opacity
+        className={`border-t border-gray-200 transition-opacity
           ${row.done ? 'opacity-40' : ''}
           ${clickable ? 'cursor-pointer active:bg-gray-50' : ''}`}
       >
         <td className="px-3! py-2.5!">
           <div className="flex items-center gap-2">
             {row.done && (
-              <IonIcon icon={checkmarkCircle} className="text-base flex-shrink-0 text-green-500" />
+              <IonIcon icon={checkmarkCircle} className="text-base text-green-500" />
             )}
-            <span className={`text-sm font-medium text-gray-800 ${row.done ? 'line-through' : ''}`}>
+            <span className={'text-sm font-medium text-gray-800'}>
               {truncate(row.name)}
             </span>
           </div>
@@ -177,7 +177,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
         <td className="px-3! py-2.5! text-sm font-semibold text-gray-800 text-right whitespace-nowrap">
           {row.amount > 0 ? fmt(row.amount) : '?'}
         </td>
-        <td className="px-3! py-2.5! text-xs text-gray-400 whitespace-nowrap">
+        <td className="px-3! py-2.5! text-xs text-gray-600 text-right whitespace-nowrap">
           {row.dateLabel}
         </td>
       </tr>
@@ -189,7 +189,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
     const pct = hasHistory ? Math.min((row.actual / row.amount) * 100, 100) : 0;
 
     return (
-      <tr key={row.budget.category_id ?? row.budget.category_name} className="border-b border-gray-100">
+      <tr key={row.budget.category_id ?? row.budget.category_name} className="border-t border-gray-200">
         <td className="px-3! py-2.5!">
           <div className="flex items-center gap-2">
             {row.done && !isPastMonth && (
@@ -225,20 +225,20 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             </>
           )}
         </td>
-        <td className="px-3! py-2.5! text-xs text-gray-400">—</td>
+        <td className="px-3! py-2.5! text-xs text-center text-gray-400">—</td>
       </tr>
     );
   };
 
   const renderCustomRow = (row: CustomRow) => (
-    <tr key={row.item.id} className="border-b border-gray-100 group">
+    <tr key={row.item.id} className="border-t border-gray-200 group">
       <td className="px-3! py-2.5!">
         <span className="text-sm font-medium text-gray-800">{truncate(row.item.label)}</span>
       </td>
       <td className="px-3! py-2.5! text-sm font-semibold text-gray-800 text-right whitespace-nowrap">
         {fmt(row.item.amount)}
       </td>
-      <td className="px-3! py-2.5! text-xs text-gray-400 whitespace-nowrap">
+      <td className="px-3! py-2.5! text-xs text-gray-400 text-right whitespace-nowrap">
         <div className="flex items-center justify-between gap-2">
           <span>{row.dateLabel}</span>
           <button
@@ -263,7 +263,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             <tr className="bg-gray-800">
               <th className="px-3! py-2.5! text-left text-xs font-semibold text-white uppercase tracking-wide">Category</th>
               <th className="px-3! py-2.5! text-right text-xs font-semibold text-white uppercase tracking-wide whitespace-nowrap">Monthly (₹)</th>
-              <th className="px-3! py-2.5! text-left text-xs font-semibold text-white uppercase tracking-wide">Date</th>
+              <th className="px-3! py-2.5! text-center text-xs font-semibold text-white uppercase tracking-wide">Date</th>
             </tr>
           </thead>
 
@@ -272,9 +272,9 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
               const rows = rowsForSection(sec.key);
               return (
                 <React.Fragment key={sec.key}>
-                  <tr className={sec.headerBg}>
-                    <td colSpan={3} className="px-3! py-1.5">
-                      <div className="flex items-center justify-between">
+                  <tr className={`${sec.headerBg}`}>
+                    <td colSpan={3} className="bg-transparent">
+                      <div className="flex px-3! py-1.5! items-center justify-between border border-b-0 rounded-t-xl border-gray-200">
                         <div className="flex items-center gap-1.5">
                           <IonIcon icon={sec.icon} className={`text-sm ${sec.iconColor}`} />
                           <span className="text-xs font-bold uppercase tracking-wide text-gray-600">{sec.label}</span>
@@ -291,15 +291,15 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                   </tr>
 
                   {rows.length === 0 ? (
-                    <tr className="border-b border-gray-100">
-                      <td colSpan={3} className="px-3! py-2 text-xs text-gray-300 italic">
+                    <tr className="border-t border-gray-200">
+                      <td colSpan={3} className="px-3! py-2! text-xs text-gray-300 italic">
                         No items — tap Add to create one
                       </td>
                     </tr>
                   ) : (
                     rows.map(row => {
                       if (row.kind === 'obligation') return renderObligationRow(row);
-                      if (row.kind === 'flexible')   return renderFlexibleRow(row);
+                      if (row.kind === 'flexible') return renderFlexibleRow(row);
                       return renderCustomRow(row);
                     })
                   )}
@@ -308,47 +308,21 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             })}
 
             {/* Total */}
-            <tr className="bg-gray-800">
-              <td className="px-3! py-2.5! text-sm font-bold text-white">Total Monthly Expense</td>
-              <td className="px-3! py-2.5! text-sm font-bold text-white text-right whitespace-nowrap">{fmt(totalExpense)}</td>
+            <tr className="bg-primary">
+              <td className="px-3! py-2! text-sm font-bold text-white">Total Monthly Expense</td>
+              <td className="px-3! py-2! text-sm font-bold text-white text-right whitespace-nowrap">{fmt(totalExpense)}</td>
               <td />
             </tr>
 
             {totalIncome > 0 && (
-              <tr className="bg-green-50 border-b border-gray-100">
-                <td className="px-3! py-2 text-xs font-semibold text-green-700">Expected Income</td>
-                <td className="px-3! py-2 text-xs font-semibold text-green-700 text-right whitespace-nowrap">{fmt(totalIncome)}</td>
+              <tr className="bg-gray-100  border-t border-gray-200">
+                <td className="text-xs font-semibold text-green-700 px-3! py-2!">Expected Income</td>
+                <td className="text-sm font-bold text-green-700 text-right whitespace-nowrap px-3! py-2!">{fmt(totalIncome)}</td>
                 <td />
               </tr>
             )}
           </tbody>
         </table>
-      </div>
-
-      {/* Months of Coverage */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-sm font-semibold text-gray-700">Months of Coverage</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => onMonthsCoverageChange(Math.max(1, monthsCoverage - 1))}
-              className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 active:bg-gray-100 font-bold text-base"
-            >−</button>
-            <span className="text-lg font-bold text-primary w-6 text-center">{monthsCoverage}</span>
-            <button
-              onClick={() => onMonthsCoverageChange(Math.min(24, monthsCoverage + 1))}
-              className="w-7 h-7 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 active:bg-gray-100 font-bold text-base"
-            >+</button>
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-400">Emergency fund target</span>
-          <span className="text-base font-bold text-gray-800">{fmt(emergencyFund)}</span>
-        </div>
-        <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, (monthsCoverage / 12) * 100)}%` }} />
-        </div>
-        <p className="text-xs text-gray-400 mt-1">{monthsCoverage}× {fmt(totalExpense)} / month</p>
       </div>
     </div>
   );

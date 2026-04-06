@@ -9,12 +9,13 @@ import MarkAsPaidDrawer from './MarkAsPaidDrawer';
 interface UpcomingOwesProps {
   obligations: PatternObligation[];
   onRefresh?: () => void;
+  onObligationFulfilled?: (obligationId: string) => void;
 }
 
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const VISIBLE_COUNT = 5;
 
-const UpcomingOwes: React.FC<UpcomingOwesProps> = ({ obligations, onRefresh }) => {
+const UpcomingOwes: React.FC<UpcomingOwesProps> = ({ obligations, onRefresh, onObligationFulfilled }) => {
   const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState<PatternObligation | null>(null);
   const [payObligation, setPayObligation] = useState<PatternObligation | null>(null);
@@ -22,13 +23,14 @@ const UpcomingOwes: React.FC<UpcomingOwesProps> = ({ obligations, onRefresh }) =
   const fulfilled = obligations.filter(o => o.status === 'FULFILLED' || o.status === 'SKIPPED').length;
   const total = obligations.length;
 
-  const sorted = [...obligations].sort(
-    (a, b) => new Date(a.expected_date).getTime() - new Date(b.expected_date).getTime()
-  );
+  const sorted = [...obligations]
+    .filter(o => o.status !== 'FULFILLED' && o.status !== 'SKIPPED' && o.status !== 'CANCELLED')
+    .sort((a, b) => new Date(a.expected_date).getTime() - new Date(b.expected_date).getTime());
+  const pending = sorted.length;
   const visible = expanded ? sorted : sorted.slice(0, VISIBLE_COUNT);
-  const hasMore = total > VISIBLE_COUNT;
+  const hasMore = pending > VISIBLE_COUNT;
 
-  if (total === 0) return null;
+  if (pending === 0 && fulfilled === 0) return null;
 
   return (
     <>
@@ -134,7 +136,10 @@ const UpcomingOwes: React.FC<UpcomingOwesProps> = ({ obligations, onRefresh }) =
       <MarkAsPaidDrawer
         obligation={payObligation}
         onDismiss={() => setPayObligation(null)}
-        onSuccess={() => { setPayObligation(null); onRefresh?.(); }}
+        onSuccess={(obligationId) => {
+          setPayObligation(null);
+          onObligationFulfilled?.(obligationId);
+        }}
       />
     </>
   );
