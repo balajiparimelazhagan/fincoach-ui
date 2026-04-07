@@ -73,10 +73,10 @@ class PatternService {
    * Falls back to deriving obligations from GET /patterns if the dedicated endpoint fails.
    * @param daysAhead - Number of days to look ahead (default 30)
    */
-  async getUpcomingObligations(daysAhead = 30): Promise<PatternObligation[]> {
+  async getUpcomingObligations(daysAhead = 30, includeFulfilled = false): Promise<PatternObligation[]> {
     try {
       const response = await api.get<PatternObligation[]>('/patterns/obligations/upcoming', {
-        params: { days_ahead: daysAhead },
+        params: { days_ahead: daysAhead, include_fulfilled: includeFulfilled },
       });
       return response.data;
     } catch {

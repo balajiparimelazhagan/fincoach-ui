@@ -24,7 +24,7 @@ export const queryKeys = {
 
   // Patterns & Obligations
   patterns:         (status?: string)               => ['patterns', status ?? 'all'] as const,
-  upcomingObligations: (daysAhead: number)          => ['obligations', 'upcoming', daysAhead] as const,
+  upcomingObligations: (daysAhead: number, includeFulfilled?: boolean) => ['obligations', 'upcoming', daysAhead, includeFulfilled ?? false] as const,
 
   // Budget
   customBudgetItems: ()                             => ['budget', 'customItems'] as const,

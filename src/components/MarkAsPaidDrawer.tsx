@@ -4,6 +4,7 @@ import { checkmarkOutline, checkmarkCircle, radioButtonOffOutline } from 'ionico
 import { PatternObligation, patternService } from '../services/patternService';
 import { transactionService, Transaction } from '../services/transactionService';
 import { accountService, Account } from '../services/accountService';
+import { useFulfillObligation } from '../hooks/queries/usePatternQueries';
 
 interface MarkAsPaidDrawerProps {
   obligation: PatternObligation | null;
@@ -15,6 +16,7 @@ const fmt = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
 const MarkAsPaidDrawer: React.FC<MarkAsPaidDrawerProps> = ({ obligation, onDismiss, onSuccess }) => {
+  const fulfillObligation = useFulfillObligation();
   const isOpen = !!obligation;
   const txType = obligation?.pattern?.direction === 'income' ? 'income' : 'expense';
   const transactorName = obligation?.transactor?.label ?? obligation?.transactor?.name ?? 'Payment';
@@ -104,7 +106,7 @@ const MarkAsPaidDrawer: React.FC<MarkAsPaidDrawerProps> = ({ obligation, onDismi
         transactionId = tx.id;
       }
 
-      await patternService.fulfillObligation(obligation.id, transactionId);
+      await fulfillObligation.mutateAsync({ obligationId: obligation.id, transactionId });
       setToastColor('success');
       setToastMsg('Marked as paid!');
       const fulfilledId = obligation.id;
@@ -167,7 +169,7 @@ const MarkAsPaidDrawer: React.FC<MarkAsPaidDrawerProps> = ({ obligation, onDismi
                         <div className="flex items-center gap-3">
                           <IonIcon
                             icon={isSelected ? checkmarkCircle : radioButtonOffOutline}
-                            className={`text-xl flex-shrink-0 ${isSelected ? 'text-primary' : 'text-gray-300'}`}
+                            className={`text-xl shrink-0 ${isSelected ? 'text-primary' : 'text-gray-300'}`}
                           />
                           <div>
                             <p className="text-sm font-semibold text-gray-800">{fmt(tx.amount)}</p>

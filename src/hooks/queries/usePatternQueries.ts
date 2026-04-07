@@ -9,10 +9,10 @@ export function usePatterns(status?: string) {
   });
 }
 
-export function useUpcomingObligations(daysAhead = 365) {
+export function useUpcomingObligations(daysAhead = 365, includeFulfilled = true) {
   return useQuery({
-    queryKey: queryKeys.upcomingObligations(daysAhead),
-    queryFn: () => patternService.getUpcomingObligations(daysAhead),
+    queryKey: queryKeys.upcomingObligations(daysAhead, includeFulfilled),
+    queryFn: () => patternService.getUpcomingObligations(daysAhead, includeFulfilled),
   });
 }
 
