@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   IonPage, IonContent, IonSpinner, IonSearchbar, IonIcon,
 } from '@ionic/react';
-import { addCircleOutline, addOutline } from 'ionicons/icons';
+import { addCircleOutline } from 'ionicons/icons';
+import { useIonToast } from '@ionic/react';
 import Footer from '../components/Footer';
 import HeaderNavItem from '../components/HeaderNavItem';
 import TransactionList from '../components/TransactionList';
@@ -10,42 +11,62 @@ import CardCarousel from '../components/CardCarousel';
 import TransactionDetailModal from '../components/TransactionDetailModal';
 import AddTransactionSheet from '../components/AddTransactionSheet';
 import { useMonthNavigation } from '../hooks/useMonthNavigation';
-import { useTransactionFilters } from '../hooks/useTransactionFilters';
-import { useAccounts } from '../hooks/useAccounts';
 import { useAccountToggle } from '../hooks/useAccountToggle';
 import { useFilteredData } from '../hooks/useFilteredData';
-import { useTransactionUpdate } from '../hooks/useTransactionUpdate';
 import { formatMonthDisplay, formatDateDisplay, getMonthDateRange } from '../utils/dateUtils';
 import { mapAccountsToCards } from '../utils/accountMapper';
 import { Transaction } from '../services/transactionService';
-import { categoryService, Category } from '../services/categoryService';
+import { useTransactions, useUpdateTransaction, useBulkUpdateTransaction } from '../hooks/queries/useTransactionQueries';
+import { useAccountStats } from '../hooks/queries/useAccountQueries';
+import { useCategories } from '../hooks/queries/useCategoryQueries';
 
 const ITEMS_PER_PAGE = 20;
 
 const Transactions: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Search
   const [searchQuery, setSearchQuery] = useState('');
-
   const [showAddSheet, setShowAddSheet] = useState(false);
+  const [present] = useIonToast();
 
-  // Month + data hooks
   const { selectedMonth, handlePrevMonth, handleNextMonth } = useMonthNavigation();
-  const { groupedTransactions, isLoading, loadingMore, hasMore, fetchTransactions } = useTransactionFilters();
-
   const { dateFrom, dateTo } = getMonthDateRange(selectedMonth);
-  const { accounts, isLoading: accountsLoading } = useAccounts(dateFrom, dateTo);
 
-  const cards        = useMemo(() => mapAccountsToCards(accounts), [accounts]);
-  const accountIds   = useMemo(() => accounts.map(a => a.id), [accounts]);
+  // ── Data queries ────────────────────────────────────────────────────────────
+  const txLimit = searchQuery.trim() ? 200 : (currentPage + 1) * ITEMS_PER_PAGE;
+  const { data: txData, isLoading: txLoading } = useTransactions(
+    { date_from: dateFrom, date_to: dateTo, limit: txLimit },
+  );
+
+  const { data: accountStatsData, isLoading: accountsLoading } = useAccountStats(dateFrom, dateTo);
+  const { data: categories = [] } = useCategories();
+
+  const updateTransaction = useUpdateTransaction();
+  const bulkUpdateTransaction = useBulkUpdateTransaction();
+
+  // ── Derived data ─────────────────────────────────────────────────────────────
+  const groupedTransactions = useMemo(() => {
+    const items = txData?.items ?? [];
+    const grouped: Record<string, Transaction[]> = {};
+    items.forEach(tx => {
+      const key = tx.date.split('T')[0];
+      (grouped[key] ??= []).push(tx);
+    });
+    return Object.keys(grouped)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+      .reduce((acc, k) => { acc[k] = grouped[k]; return acc; }, {} as Record<string, Transaction[]>);
+  }, [txData]);
+
+  const accounts = useMemo(() => accountStatsData?.items ?? [], [accountStatsData]);
+  const cards = useMemo(() => mapAccountsToCards(accounts), [accounts]);
+  const accountIds = useMemo(() => accounts.map(a => a.id), [accounts]);
   const { enabledAccounts, handleToggleAccount } = useAccountToggle(accountIds);
   const { filteredTransactions } = useFilteredData(groupedTransactions, cards, enabledAccounts);
 
-  // Client-side search across enabled accounts
+  const hasMore = (txData?.count ?? 0) > (currentPage + 1) * ITEMS_PER_PAGE && !searchQuery.trim();
+
+  // ── Client-side search ───────────────────────────────────────────────────────
   const searchedTransactions = useMemo(() => {
     if (!searchQuery.trim()) return filteredTransactions;
     const q = searchQuery.toLowerCase();
@@ -60,34 +81,38 @@ const Transactions: React.FC = () => {
     return result;
   }, [filteredTransactions, searchQuery]);
 
-  const { handleTransactionUpdate } = useTransactionUpdate({
-    onSuccess: () => {
-      fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, 0, false);
+  // ── Handlers ─────────────────────────────────────────────────────────────────
+  const handleTransactionUpdate = async (
+    transactionId: string,
+    updates: { category_id?: string; transactor_label?: string },
+    updateScope: 'single' | 'current_and_future' | 'month_only' | 'month_and_future'
+  ) => {
+    try {
+      let updatedCount = 1;
+      if (updateScope === 'single') {
+        await updateTransaction.mutateAsync({ id: transactionId, updates });
+      } else {
+        const result = await bulkUpdateTransaction.mutateAsync({
+          id: transactionId,
+          updates: { ...updates, update_scope: updateScope },
+        });
+        updatedCount = result.updated_count;
+      }
+      present({
+        message: updatedCount === 1
+          ? 'Transaction updated successfully'
+          : `${updatedCount} transaction(s) updated successfully`,
+        duration: 2000,
+        color: 'success',
+      });
       handleCloseModal();
-    },
-  });
-
-  useEffect(() => {
-    categoryService.getCategories().then(setCategories).catch(console.error);
-  }, []);
-
-  // Fetch paginated transactions when month changes; clear search
-  useEffect(() => {
-    setSearchQuery('');
-    fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, 0, false);
-    setCurrentPage(0);
-  }, [selectedMonth, fetchTransactions, dateFrom, dateTo]);
-
-  // When search is active, fetch up to the API max so results aren't cut off
-  useEffect(() => {
-    if (!searchQuery.trim()) return;
-    fetchTransactions(dateFrom, dateTo, 200, 0, false);
-  }, [searchQuery, dateFrom, dateTo, fetchTransactions]);
+    } catch {
+      present({ message: 'Failed to update transaction', duration: 2000, color: 'danger' });
+    }
+  };
 
   const handleLoadMore = () => {
-    const nextPage = currentPage + 1;
-    fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, nextPage * ITEMS_PER_PAGE, true);
-    setCurrentPage(nextPage);
+    setCurrentPage(p => p + 1);
   };
 
   const handleTransactionClick = (tx: Transaction) => {
@@ -102,25 +127,22 @@ const Transactions: React.FC = () => {
 
   const handleSearchInput = (val: string) => {
     setSearchQuery(val);
-    if (!val.trim()) {
-      fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, 0, false);
-      setCurrentPage(0);
-    }
+    if (!val.trim()) setCurrentPage(0);
   };
+
+  const isLoading = txLoading;
 
   return (
     <IonPage>
       <IonContent fullscreen>
         <div className="p-5 pb-24 space-y-4 bg-gray-50">
 
-          {/* Month Selector */}
           <HeaderNavItem
             title={formatMonthDisplay(selectedMonth)}
-            onPrev={handlePrevMonth}
-            onNext={handleNextMonth}
+            onPrev={() => { handlePrevMonth(); setCurrentPage(0); setSearchQuery(''); }}
+            onNext={() => { handleNextMonth(); setCurrentPage(0); setSearchQuery(''); }}
           />
 
-          {/* Card Carousel */}
           {accountsLoading ? (
             <div className="flex items-center justify-center p-8 bg-white rounded-xl border border-gray-100">
               <IonSpinner name="bubbles" />
@@ -143,7 +165,6 @@ const Transactions: React.FC = () => {
             </div>
           )}
 
-          {/* Search + Add */}
           <div className="flex items-center gap-2">
             <IonSearchbar
               value={searchQuery}
@@ -154,14 +175,13 @@ const Transactions: React.FC = () => {
             />
             <button
               onClick={() => setShowAddSheet(true)}
-              className="flex-shrink-0 flex items-center font-bold justify-centertext-primary active:opacity-80"
+              className="shrink-0 flex items-center font-bold justify-centertext-primary active:opacity-80"
               aria-label="Add transaction"
             >
               <IonIcon icon={addCircleOutline} className="text-primary font-semibold text-xl w-9 h-9" />
             </button>
           </div>
 
-          {/* Transactions grouped by date */}
           {!isLoading && Object.keys(searchedTransactions).length > 0 ? (
             <div className="space-y-4">
               {Object.entries(searchedTransactions).map(([date, txs]) => (
@@ -187,20 +207,12 @@ const Transactions: React.FC = () => {
             </div>
           ) : null}
 
-          {/* Load More — hidden while searching */}
           {!isLoading && !searchQuery.trim() && hasMore && (
             <div className="flex justify-center py-4">
-              <button onClick={handleLoadMore} disabled={loadingMore}>
-                {loadingMore ? (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <IonSpinner name="dots" />
-                    Loading...
-                  </div>
-                ) : (
-                  <div className="px-4 py-1.5 bg-primary text-xs text-white rounded-2xl active:opacity-80">
-                    Load More
-                  </div>
-                )}
+              <button onClick={handleLoadMore}>
+                <div className="px-4 py-1.5 bg-primary text-xs text-white rounded-2xl active:opacity-80">
+                  Load More
+                </div>
               </button>
             </div>
           )}
@@ -210,7 +222,7 @@ const Transactions: React.FC = () => {
       <AddTransactionSheet
         isOpen={showAddSheet}
         onDismiss={() => setShowAddSheet(false)}
-        onSuccess={() => fetchTransactions(dateFrom, dateTo, ITEMS_PER_PAGE, 0, false)}
+        onSuccess={() => {}}
         categories={categories}
         enabledAccounts={enabledAccounts}
       />

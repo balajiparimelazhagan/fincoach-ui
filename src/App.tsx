@@ -2,6 +2,9 @@ import React, { Suspense } from 'react';
 import { IonApp, IonSpinner, setupIonicReact } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { Route, Redirect } from 'react-router-dom';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from './lib/queryClient';
 import { UserProvider } from './context/UserContext';
 
 /* Core CSS required for Ionic components to work properly */
@@ -46,23 +49,26 @@ const PageFallback: React.FC = () => (
 
 const App: React.FC = () => {
   return (
-    <IonApp>
-      <UserProvider>
-        <IonReactRouter>
-          <Suspense fallback={<PageFallback />}>
-            <Route exact path="/login"           component={Login} />
-            <Route exact path="/dashboard"       component={Dashboard} />
-            <Route exact path="/transactions"    component={Transactions} />
-            <Route exact path="/insights"        component={Insights} />
-            <Route exact path="/cashflow"         component={Cashflow} />
-            <Route exact path="/budget"          component={Budget} />
-            <Route exact path="/patterns"        component={Patterns} />
-            <Route exact path="/portfolio"       component={Portfolio} />
-            <Route exact path="/" render={() => <Redirect to="/login" />} />
-          </Suspense>
-        </IonReactRouter>
-      </UserProvider>
-    </IonApp>
+    <QueryClientProvider client={queryClient}>
+      <IonApp>
+        <UserProvider>
+          <IonReactRouter>
+            <Suspense fallback={<PageFallback />}>
+              <Route exact path="/login"        component={Login} />
+              <Route exact path="/dashboard"    component={Dashboard} />
+              <Route exact path="/transactions" component={Transactions} />
+              <Route exact path="/insights"     component={Insights} />
+              <Route exact path="/cashflow"     component={Cashflow} />
+              <Route exact path="/budget"       component={Budget} />
+              <Route exact path="/patterns"     component={Patterns} />
+              <Route exact path="/portfolio"    component={Portfolio} />
+              <Route exact path="/" render={() => <Redirect to="/login" />} />
+            </Suspense>
+          </IonReactRouter>
+        </UserProvider>
+      </IonApp>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 };
 

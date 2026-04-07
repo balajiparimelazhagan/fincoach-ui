@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   IonPage,
   IonContent,
@@ -27,6 +27,8 @@ import ProfileIcon from '../components/ProfileIcon';
 import { DashboardPreferencesPanel } from '../components/PreferenceToggle';
 import { useUser } from '../context/UserContext';
 import { patternService, RecurringPattern, PatternObligation } from '../services/patternService';
+import { usePatterns } from '../hooks/queries/usePatternQueries';
+import { useUpcomingObligations } from '../hooks/queries/usePatternQueries';
 
 // ── classification helpers ──────────────────────────────────────────────────
 
@@ -122,7 +124,7 @@ const PatternRow: React.FC<PatternRowProps> = ({ pattern, nextOb }) => {
             )}
           </div>
           <div className={`text-xs flex items-center gap-1 mt-0.5 ${dueColor}`}>
-            <IonIcon icon={dueIcon} className="text-xs flex-shrink-0" />
+            <IonIcon icon={dueIcon} className="text-xs shrink-0" />
             {dueText}
             {streak > 0 && (
               <span className="ml-1 text-gray-400">· {streak}× paid</span>
@@ -130,7 +132,7 @@ const PatternRow: React.FC<PatternRowProps> = ({ pattern, nextOb }) => {
           </div>
         </div>
         {amount > 0 && (
-          <div className="text-right flex-shrink-0">
+          <div className="text-right shrink-0">
             <div className="text-sm font-bold text-gray-800">{fmt(amount)}</div>
             <div className="text-xs text-gray-400">per cycle</div>
           </div>
@@ -153,24 +155,13 @@ const PatternRow: React.FC<PatternRowProps> = ({ pattern, nextOb }) => {
 const Portfolio: React.FC = () => {
   const history = useHistory();
   const { state: { profile, preferences }, updateDashboardPreference } = useUser();
-  const [patterns, setPatterns] = useState<RecurringPattern[]>([]);
-  const [obligations, setObligations] = useState<PatternObligation[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showPopover, setShowPopover] = useState(false);
   const [popoverEvent, setPopoverEvent] = useState<any>(undefined);
 
-  useEffect(() => {
-    Promise.all([
-      patternService.getPatterns(undefined, true),
-      patternService.getUpcomingObligations(90),
-    ])
-      .then(([pats, obs]) => {
-        setPatterns(pats);
-        setObligations(obs);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: patterns = [], isLoading: patternsLoading } = usePatterns();
+  const { data: obligations = [], isLoading: obligationsLoading } = useUpcomingObligations(90);
+
+  const loading = patternsLoading || obligationsLoading;
 
   const handleSettingsClick = (e: any) => {
     setPopoverEvent(e.nativeEvent);
@@ -199,7 +190,6 @@ const Portfolio: React.FC = () => {
   const savingsPats = patterns.filter(p => classify(p) === 'savings');
   const healthPats = patterns.filter(p => classify(p) === 'health');
 
-  // Annual insurance outflow estimate
   const annualInsurance = insurancePats.reduce((sum, p) => {
     const ob = getNextOb(p.id);
     const amt = ob ? patternService.getExpectedAmount(ob) : 0;
@@ -207,12 +197,8 @@ const Portfolio: React.FC = () => {
     return sum + amt * freq;
   }, 0);
 
-  const SectionHeader: React.FC<{
-    icon: string;
-    label: string;
-    color: string;
-  }> = ({ icon, label, color }) => (
-    <div className={`flex items-center gap-2 px-1`}>
+  const SectionHeader: React.FC<{ icon: string; label: string; color: string }> = ({ icon, label, color }) => (
+    <div className="flex items-center gap-2 px-1">
       <IonIcon icon={icon} className={`text-sm ${color}`} />
       <span className="text-xs font-bold text-gray-600 uppercase tracking-wide">{label}</span>
     </div>
@@ -255,7 +241,6 @@ const Portfolio: React.FC = () => {
       <IonContent fullscreen className="bg-gray-100">
         <div className="p-5 pb-24 flex flex-col gap-5">
 
-          {/* User Card */}
           <div className="bg-primary rounded-2xl p-5 shadow-md">
             <div className="flex items-center gap-3">
               <ProfileIcon />
@@ -274,7 +259,6 @@ const Portfolio: React.FC = () => {
             </div>
           ) : (
             <>
-              {/* Insurance */}
               {insurancePats.length > 0 && (
                 <div className="flex flex-col gap-3">
                   <SectionHeader icon={shieldCheckmarkOutline} label="Insurance" color="text-blue-500" />
@@ -296,7 +280,6 @@ const Portfolio: React.FC = () => {
                 </div>
               )}
 
-              {/* Savings & Investments */}
               {savingsPats.length > 0 && (
                 <div className="flex flex-col gap-3">
                   <SectionHeader icon={trendingUpOutline} label="Savings & Investments" color="text-green-500" />
@@ -306,7 +289,6 @@ const Portfolio: React.FC = () => {
                 </div>
               )}
 
-              {/* Healthcare */}
               {healthPats.length > 0 && (
                 <div className="flex flex-col gap-3">
                   <SectionHeader icon={medkitOutline} label="Healthcare" color="text-red-400" />
@@ -316,7 +298,6 @@ const Portfolio: React.FC = () => {
                 </div>
               )}
 
-              {/* Empty state */}
               {insurancePats.length === 0 && savingsPats.length === 0 && healthPats.length === 0 && (
                 <div className="text-center py-12 text-gray-400">
                   <IonIcon icon={shieldCheckmarkOutline} className="text-5xl text-gray-200 mb-3" />

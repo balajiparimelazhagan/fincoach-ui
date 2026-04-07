@@ -1,84 +1,19 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { userService, UserProfile, UserPreferences, DashboardPreferences } from '../services/userService';
-import { getErrorMessage } from '../utils/errors';
-
-// ============ State Types ============
-
-interface UserState {
-  profile: UserProfile | null;
-  preferences: UserPreferences | null;
-  loading: boolean;
-  error: string | null;
-}
-
-// ============ Action Types ============
-
-type UserAction =
-  | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SET_USER_DATA'; payload: { profile: UserProfile; preferences: UserPreferences } }
-  | { type: 'SET_PROFILE'; payload: UserProfile }
-  | { type: 'SET_PREFERENCES'; payload: UserPreferences }
-  | { type: 'UPDATE_PREFERENCE'; payload: { key: keyof DashboardPreferences; value: boolean } }
-  | { type: 'RESET_USER' };
-
-// ============ Reducer ============
-
-const initialState: UserState = {
-  profile: null,
-  preferences: null,
-  loading: false,
-  error: null
-};
-
-function userReducer(state: UserState, action: UserAction): UserState {
-  switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, loading: action.payload };
-    
-    case 'SET_ERROR':
-      return { ...state, error: action.payload, loading: false };
-    
-    case 'SET_USER_DATA':
-      return {
-        ...state,
-        profile: action.payload.profile,
-        preferences: action.payload.preferences,
-        loading: false,
-        error: null
-      };
-    
-    case 'SET_PROFILE':
-      return { ...state, profile: action.payload };
-    
-    case 'SET_PREFERENCES':
-      return { ...state, preferences: action.payload };
-    
-    case 'UPDATE_PREFERENCE':
-      if (!state.preferences) return state;
-      return {
-        ...state,
-        preferences: {
-          ...state.preferences,
-          dashboard: {
-            ...state.preferences.dashboard,
-            [action.payload.key]: action.payload.value
-          }
-        }
-      };
-    
-    case 'RESET_USER':
-      return initialState;
-    
-    default:
-      return state;
-  }
-}
+import { useUpdateDashboardPreference, useUpdateDashboardPreferences } from '../hooks/queries/useUserQueries';
+import { queryKeys } from '../lib/queryKeys';
+import { storageService } from '../services/storage';
 
 // ============ Context Types ============
 
 interface UserContextType {
-  state: UserState;
+  state: {
+    profile: UserProfile | null;
+    preferences: UserPreferences | null;
+    loading: boolean;
+    error: string | null;
+  };
   fetchUserData: () => Promise<void>;
   updateDashboardPreference: (key: keyof DashboardPreferences, value: boolean) => Promise<void>;
   updateDashboardPreferences: (prefs: Partial<DashboardPreferences>) => Promise<void>;
@@ -91,102 +26,84 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // ============ Provider ============
 
-interface UserProviderProps {
-  children: ReactNode;
-}
+export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const queryClient = useQueryClient();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = checking
 
-export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const [state, dispatch] = useReducer(userReducer, initialState);
+  // Check auth token on mount
+  useEffect(() => {
+    storageService.get('access_token').then((token) => {
+      setIsAuthenticated(!!token);
+    });
+  }, []);
+
+  const {
+    data: profile = null,
+    isLoading: profileLoading,
+    error: profileError,
+  } = useQuery({
+    queryKey: queryKeys.userProfile(),
+    queryFn: () => userService.getUserProfile(),
+    enabled: isAuthenticated === true,
+  });
+
+  const {
+    data: preferencesResponse,
+    isLoading: prefsLoading,
+  } = useQuery({
+    queryKey: queryKeys.userPreferences(),
+    queryFn: () => userService.getUserPreferences(),
+    enabled: isAuthenticated === true,
+  });
+
+  const updatePreferenceMutation = useUpdateDashboardPreference();
+  const updatePreferencesMutation = useUpdateDashboardPreferences();
+
+  // Derive preferences with fallback defaults
+  const preferences: UserPreferences | null = preferencesResponse?.ui_preferences ?? (
+    isAuthenticated
+      ? {
+          dashboard: {
+            show_ai_suggestions: true,
+            show_budget_summary: true,
+            show_income_expense: true,
+            show_transaction_list: true,
+            show_category_breakdown: true,
+          },
+        }
+      : null
+  );
+
+  const loading = isAuthenticated === null || profileLoading || prefsLoading;
+  const error = profileError ? (profileError as Error).message : null;
 
   const fetchUserData = async () => {
-    try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      dispatch({ type: 'SET_ERROR', payload: null });
-      
-      const userData = await userService.getUserData();
-      
-      dispatch({
-        type: 'SET_USER_DATA',
-        payload: userData
-      });
-    } catch (err) {
-      console.error('Failed to fetch user data:', err);
-      dispatch({
-        type: 'SET_ERROR',
-        payload: getErrorMessage(err)
-      });
-      
-      // Set default preferences on error
-      if (!state.preferences) {
-        dispatch({
-          type: 'SET_PREFERENCES',
-          payload: {
-            dashboard: {
-              show_ai_suggestions: true,
-              show_budget_summary: true,
-              show_income_expense: true,
-              show_transaction_list: true,
-              show_category_breakdown: true
-            }
-          }
-        });
-      }
-    }
+    await queryClient.invalidateQueries({ queryKey: queryKeys.userProfile() });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.userPreferences() });
   };
 
   const updateDashboardPreference = async (key: keyof DashboardPreferences, value: boolean) => {
-    try {
-      // Optimistic update
-      dispatch({ type: 'UPDATE_PREFERENCE', payload: { key, value } });
-      
-      const response = await userService.updateDashboardPreference(key, value);
-      
-      // Update with server response
-      dispatch({ type: 'SET_PREFERENCES', payload: response.ui_preferences });
-    } catch (err) {
-      console.error('Failed to update preference:', err);
-      await fetchUserData();
-      throw err;
-    }
+    await updatePreferenceMutation.mutateAsync({ key, value });
   };
 
   const updateDashboardPreferences = async (prefs: Partial<DashboardPreferences>) => {
-    try {
-      const response = await userService.updateDashboardPreferences(prefs);
-      dispatch({ type: 'SET_PREFERENCES', payload: response.ui_preferences });
-    } catch (err) {
-      console.error('Failed to update preferences:', err);
-      throw err;
-    }
+    await updatePreferencesMutation.mutateAsync(prefs);
   };
 
   const logout = async () => {
     await userService.logout();
-    dispatch({ type: 'RESET_USER' });
+    setIsAuthenticated(false);
+    queryClient.clear(); // wipe entire cache on logout
   };
-
-  useEffect(() => {
-    // Only fetch user data if token exists (user is authenticated)
-    const initUserData = async () => {
-      const isAuthenticated = await userService.isAuthenticated();
-      if (isAuthenticated) {
-        await fetchUserData();
-      } else {
-        dispatch({ type: 'SET_LOADING', payload: false });
-      }
-    };
-
-    initUserData();
-  }, []);
 
   return (
     <UserContext.Provider
       value={{
-        state,
+        state: { profile, preferences, loading, error },
         fetchUserData,
         updateDashboardPreference,
         updateDashboardPreferences,
-        logout
+        logout,
       }}
     >
       {children}
@@ -198,8 +115,6 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
 export const useUser = (): UserContextType => {
   const context = useContext(UserContext);
-  if (!context) {
-    throw new Error('useUser must be used within a UserProvider');
-  }
+  if (!context) throw new Error('useUser must be used within a UserProvider');
   return context;
 };

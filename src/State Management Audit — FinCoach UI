@@ -1,0 +1,585 @@
+State Management Audit — FinCoach UI
+What We Have Today
+Global State: One context (UserContext) using useReducer. Stores user profile and dashboard preferences. Works correctly — re-fetches on app init, survives refresh.
+
+Everything else: Raw useState + useEffect inside each page. No caching. No shared request state.
+
+Result: Every time a user navigates to a page or refreshes, every API call fires again from scratch. Pagination position is lost. Search queries vanish. Account toggles reset. The obligations "vanish" bug we just fixed is a direct symptom — we had to manually wire optimistic updates because there was no cache to update.
+
+What we need: Keep UserContext for auth/preferences. Add TanStack Query for all server data.
+
+Why TanStack Query
+TanStack Query is a server-state library. It separates server data (what the API returns) from UI state (what the user is doing). You define a query key + fetch function once. Any component that needs that data calls the same hook. Under the hood:
+
+The first component to mount fires the request
+Other components share the same in-flight request (deduplication)
+Data is cached by query key for a configurable stale time
+Navigating away and back does a background refetch but shows cached data instantly
+Mutations (create/update/delete) can invalidate related queries or do optimistic updates declaratively
+Loading, error, and success states come built-in — no boilerplate isLoading flags
+Task Document
+TASK 1 — Install and configure TanStack Query
+Goal: Add TanStack Query to the project and wire up the provider.
+
+Steps:
+
+1.1 Install the package
+
+
+cd ui
+npm install @tanstack/react-query
+Also install the devtools (visible only in dev builds, very useful):
+
+
+npm install @tanstack/react-query-devtools
+1.2 Create the QueryClient
+
+Create a new file src/lib/queryClient.ts:
+
+
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5,      // data stays fresh for 5 minutes
+      gcTime: 1000 * 60 * 10,         // cache held for 10 minutes after unused
+      retry: 2,                        // retry failed requests twice
+      refetchOnWindowFocus: false,     // don't refetch when user switches tabs
+    },
+  },
+});
+What staleTime means: If the same query was fetched less than 5 minutes ago, TanStack Query serves the cached value and does NOT fire a network request. After 5 minutes, the data is considered "stale" — it still shows the cached value immediately but fires a background refetch to update it. This is what eliminates the blank screen on navigation.
+
+1.3 Wrap the app in the provider
+
+Open src/App.tsx. Currently it only has <UserProvider>. Add QueryClientProvider wrapping everything:
+
+
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from './lib/queryClient';
+
+// Inside the return:
+<QueryClientProvider client={queryClient}>
+  <UserProvider>
+    {/* existing IonApp / router / routes */}
+  </UserProvider>
+  <ReactQueryDevtools initialIsOpen={false} />
+</QueryClientProvider>
+ReactQueryDevtools renders nothing in production builds. It shows a floating button in dev where you can inspect every cached query, their state, and manually invalidate them.
+
+TASK 2 — Define query keys
+Goal: Create a centralised file for all query keys. This is important because query keys are how TanStack Query identifies cached data. If you write the key differently in two places, you get two separate caches and invalidation won't work.
+
+Create src/lib/queryKeys.ts:
+
+
+export const queryKeys = {
+  // User
+  userProfile: () => ['user', 'profile'] as const,
+  userPreferences: () => ['user', 'preferences'] as const,
+
+  // Transactions
+  transactions: (filters: Record<string, unknown>) => ['transactions', filters] as const,
+  transaction: (id: string) => ['transactions', id] as const,
+  monthTotals: (year: number, month: number) => ['transactions', 'totals', year, month] as const,
+
+  // Accounts
+  accounts: (filters?: Record<string, unknown>) => ['accounts', filters ?? {}] as const,
+  accountStats: (dateFrom: string, dateTo: string) => ['accounts', 'stats', dateFrom, dateTo] as const,
+
+  // Categories
+  categories: () => ['categories'] as const,
+
+  // Stats / Analytics
+  dailySummary: (year: number, month: number) => ['stats', 'daily', year, month] as const,
+  categoryBudgets: (year: number, month: number) => ['stats', 'categoryBudgets', year, month] as const,
+  projectedSummary: (year: number, month: number) => ['stats', 'projected', year, month] as const,
+  spendingByCategory: (dateFrom: string, dateTo: string) => ['stats', 'spendingByCategory', dateFrom, dateTo] as const,
+  comprehensiveStats: (dateFrom: string, dateTo: string) => ['stats', 'comprehensive', dateFrom, dateTo] as const,
+
+  // Patterns & Obligations
+  patterns: (status?: string) => ['patterns', status ?? 'all'] as const,
+  upcomingObligations: (daysAhead: number) => ['obligations', 'upcoming', daysAhead] as const,
+
+  // Budget
+  customBudgetItems: () => ['budget', 'customItems'] as const,
+};
+Why arrays as keys: TanStack Query uses deep equality on arrays. ['transactions', { month: 4 }] and ['transactions', { month: 5 }] are different keys and have separate caches. When you call queryClient.invalidateQueries({ queryKey: ['transactions'] }), it invalidates ALL keys that start with 'transactions'.
+
+TASK 3 — Create query hooks for each service
+Goal: Wrap every service call in a useQuery hook. Create one file per domain under src/hooks/queries/.
+
+Create the folder: src/hooks/queries/
+
+3.1 src/hooks/queries/useUserQueries.ts
+
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { userService, DashboardPreferences } from '../../services/userService';
+import { queryKeys } from '../../lib/queryKeys';
+
+export function useUserProfile() {
+  return useQuery({
+    queryKey: queryKeys.userProfile(),
+    queryFn: () => userService.getUserProfile(),
+  });
+}
+
+export function useUserPreferences() {
+  return useQuery({
+    queryKey: queryKeys.userPreferences(),
+    queryFn: () => userService.getUserPreferences(),
+  });
+}
+
+export function useUpdateDashboardPreference() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ key, value }: { key: keyof DashboardPreferences; value: boolean }) =>
+      userService.updateDashboardPreference(key, value),
+
+    // Optimistic update — update cache immediately before the API responds
+    onMutate: async ({ key, value }) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.userPreferences() });
+      const previous = queryClient.getQueryData(queryKeys.userPreferences());
+
+      queryClient.setQueryData(queryKeys.userPreferences(), (old: any) => ({
+        ...old,
+        ui_preferences: {
+          ...old?.ui_preferences,
+          dashboard: { ...old?.ui_preferences?.dashboard, [key]: value },
+        },
+      }));
+
+      return { previous }; // returned as context for onError rollback
+    },
+
+    // If the API call fails, roll back the optimistic update
+    onError: (_err, _vars, context: any) => {
+      queryClient.setQueryData(queryKeys.userPreferences(), context.previous);
+    },
+
+    // Always refetch after success or failure to make sure cache is accurate
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.userPreferences() });
+    },
+  });
+}
+3.2 src/hooks/queries/useTransactionQueries.ts
+
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { transactionService } from '../../services/transactionService';
+import { queryKeys } from '../../lib/queryKeys';
+
+export function useTransactions(filters: Parameters<typeof transactionService.getTransactions>[0]) {
+  return useQuery({
+    queryKey: queryKeys.transactions(filters as Record<string, unknown>),
+    queryFn: () => transactionService.getTransactions(filters),
+    enabled: !!filters, // don't run if filters not ready yet
+  });
+}
+
+export function useMonthTotals(year: number, month: number) {
+  return useQuery({
+    queryKey: queryKeys.monthTotals(year, month),
+    queryFn: () => transactionService.getMonthTotals(year, month),
+  });
+}
+
+export function useUpdateTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, updates, scope }: { id: string; updates: any; scope?: string }) =>
+      scope
+        ? transactionService.bulkUpdateTransactions(id, updates, scope as any)
+        : transactionService.updateTransaction(id, updates),
+
+    onSuccess: () => {
+      // Invalidate all transaction queries — any list that showed this tx needs to refresh
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+}
+
+export function useCreateTransaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: transactionService.createTransaction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+}
+3.3 src/hooks/queries/useAccountQueries.ts
+
+
+import { useQuery } from '@tanstack/react-query';
+import { accountService } from '../../services/accountService';
+import { queryKeys } from '../../lib/queryKeys';
+
+export function useAccounts(filters?: Parameters<typeof accountService.getAccounts>[0]) {
+  return useQuery({
+    queryKey: queryKeys.accounts(filters as Record<string, unknown>),
+    queryFn: () => accountService.getAccounts(filters),
+    staleTime: 1000 * 60 * 10, // accounts don't change often — cache for 10 minutes
+  });
+}
+
+export function useAccountStats(dateFrom: string, dateTo: string) {
+  return useQuery({
+    queryKey: queryKeys.accountStats(dateFrom, dateTo),
+    queryFn: () => accountService.getAccountsWithStats(dateFrom, dateTo),
+    enabled: !!dateFrom && !!dateTo,
+  });
+}
+3.4 src/hooks/queries/useCategoryQueries.ts
+
+
+import { useQuery } from '@tanstack/react-query';
+import { categoryService } from '../../services/categoryService';
+import { queryKeys } from '../../lib/queryKeys';
+
+export function useCategories() {
+  return useQuery({
+    queryKey: queryKeys.categories(),
+    queryFn: () => categoryService.getCategories(),
+    staleTime: 1000 * 60 * 30, // categories rarely change — cache for 30 minutes
+    gcTime: Infinity,           // never garbage collect categories from cache
+  });
+}
+3.5 src/hooks/queries/useStatsQueries.ts
+
+
+import { useQuery } from '@tanstack/react-query';
+import { statsService } from '../../services/statsService';
+import { queryKeys } from '../../lib/queryKeys';
+
+export function useDailySummary(year: number, month: number) {
+  return useQuery({
+    queryKey: queryKeys.dailySummary(year, month),
+    queryFn: () => statsService.getCashflowDailySummary(year, month),
+  });
+}
+
+export function useCategoryBudgets(year: number, month: number) {
+  return useQuery({
+    queryKey: queryKeys.categoryBudgets(year, month),
+    queryFn: () => statsService.getCategoryBudgets(year, month),
+  });
+}
+
+export function useProjectedSummary(year: number, month: number) {
+  return useQuery({
+    queryKey: queryKeys.projectedSummary(year, month),
+    queryFn: () => statsService.getProjectedSummary(year, month),
+  });
+}
+
+export function useSpendingByCategory(dateFrom: string, dateTo: string) {
+  return useQuery({
+    queryKey: queryKeys.spendingByCategory(dateFrom, dateTo),
+    queryFn: () => statsService.getSpendingByCategory(dateFrom, dateTo),
+    enabled: !!dateFrom && !!dateTo,
+  });
+}
+3.6 src/hooks/queries/usePatternQueries.ts
+
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { patternService } from '../../services/patternService';
+import { queryKeys } from '../../lib/queryKeys';
+
+export function usePatterns(status?: string) {
+  return useQuery({
+    queryKey: queryKeys.patterns(status),
+    queryFn: () => patternService.getPatterns(status),
+  });
+}
+
+export function useUpcomingObligations(daysAhead = 365) {
+  return useQuery({
+    queryKey: queryKeys.upcomingObligations(daysAhead),
+    queryFn: () => patternService.getUpcomingObligations(daysAhead),
+  });
+}
+
+export function useFulfillObligation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ obligationId, transactionId }: { obligationId: string; transactionId?: string }) =>
+      patternService.fulfillObligation(obligationId, transactionId),
+
+    // Optimistic update — mark the obligation as FULFILLED in cache immediately
+    onMutate: async ({ obligationId }) => {
+      await queryClient.cancelQueries({ queryKey: ['obligations'] });
+
+      // Snapshot current cache for rollback
+      const previousData = queryClient.getQueriesData({ queryKey: ['obligations'] });
+
+      // Update every obligations query in cache
+      queryClient.setQueriesData({ queryKey: ['obligations'] }, (old: any) => {
+        if (!Array.isArray(old)) return old;
+        return old.map((o: any) =>
+          o.id === obligationId ? { ...o, status: 'FULFILLED' } : o
+        );
+      });
+
+      return { previousData };
+    },
+
+    onError: (_err, _vars, context: any) => {
+      // Rollback on failure
+      context?.previousData?.forEach(([queryKey, data]: [any, any]) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['obligations'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    },
+  });
+}
+
+export function useSnoozeObligation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ obligationId, days }: { obligationId: string; days?: number }) =>
+      patternService.snoozeObligation(obligationId, days),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['obligations'] }),
+  });
+}
+
+export function useSkipObligation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ obligationId }: { obligationId: string }) =>
+      patternService.skipObligation(obligationId),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['obligations'] }),
+  });
+}
+3.7 src/hooks/queries/useBudgetQueries.ts
+
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { budgetService, CustomBudgetItem } from '../../services/budgetService';
+import { queryKeys } from '../../lib/queryKeys';
+
+export function useCustomBudgetItems() {
+  return useQuery({
+    queryKey: queryKeys.customBudgetItems(),
+    queryFn: () => budgetService.getCustomItems(),
+  });
+}
+
+export function useCreateBudgetItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: budgetService.createCustomItem,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.customBudgetItems() }),
+  });
+}
+
+export function useDeleteBudgetItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => budgetService.deleteCustomItem(id),
+
+    // Optimistic removal from list
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.customBudgetItems() });
+      const previous = queryClient.getQueryData(queryKeys.customBudgetItems());
+      queryClient.setQueryData(queryKeys.customBudgetItems(), (old: CustomBudgetItem[] | undefined) =>
+        old?.filter(item => item.id !== id) ?? []
+      );
+      return { previous };
+    },
+
+    onError: (_err, _id, context: any) => {
+      queryClient.setQueryData(queryKeys.customBudgetItems(), context.previous);
+    },
+
+    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.customBudgetItems() }),
+  });
+}
+TASK 4 — Update UserContext to use TanStack Query internally
+Goal: UserContext currently does its own fetch with useEffect. Replace that fetch with TanStack Query so profile/preferences data is cached and shared.
+
+Why keep UserContext at all: Other parts of the app need profile and preferences via useUser(). That hook interface doesn't need to change — we just make the data source be TanStack Query instead of raw fetch.
+
+Open src/context/UserContext.tsx. Change fetchUserData to read from TanStack Query cache:
+
+
+import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '../lib/queryKeys';
+
+// Inside the provider, replace the useEffect + fetch with:
+const { data: profileData, isLoading: profileLoading } = useQuery({
+  queryKey: queryKeys.userProfile(),
+  queryFn: () => userService.getUserProfile(),
+  enabled: isAuthenticated, // only fetch if user is logged in
+});
+
+const { data: preferencesData, isLoading: prefsLoading } = useQuery({
+  queryKey: queryKeys.userPreferences(),
+  queryFn: () => userService.getUserPreferences(),
+  enabled: isAuthenticated,
+});
+Then derive state from these queries instead of dispatching actions. The useReducer can be simplified to just auth state (isAuthenticated) since profile/preferences are now managed by TanStack Query.
+
+TASK 5 — Replace page-level fetching with query hooks
+Goal: For each page, remove the useEffect + useState pairs that fetch data and replace with the query hooks created in Task 3.
+
+Go through each page in this order (simplest first):
+
+5.1 Patterns.tsx
+
+Currently:
+
+
+const [patterns, setPatterns] = useState([]);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  patternService.getPatterns().then(setPatterns).finally(() => setLoading(false));
+}, []);
+Replace with:
+
+
+const { data: patterns = [], isLoading: loading } = usePatterns();
+Remove the useEffect, remove the two useState calls. Done.
+
+5.2 Dashboard.tsx
+
+Currently has 3 separate useEffect chains. Replace:
+
+
+// Before
+const [incomeExpenseData, setIncomeExpenseData] = useState(null);
+const [projectedData, setProjectedData] = useState(null);
+const [obligations, setObligations] = useState([]);
+
+useEffect(() => { /* fetch month totals */ }, [profile]);
+useEffect(() => { /* fetch projected + obligations */ }, [profile]);
+
+// After
+const { data: incomeExpenseData } = useMonthTotals(now.getFullYear(), now.getMonth());
+const { data: projectedData } = useProjectedSummary(now.getFullYear(), now.getMonth() + 1);
+const { data: obligations = [] } = useUpcomingObligations(45);
+The isLoading and error states also come from the hooks. Remove the manual fetchDashboardData callback and the onSync handler — replace with queryClient.invalidateQueries on the sync button click.
+
+5.3 Cashflow.tsx
+
+This page has the most state. It fetches daily summary, obligations, category budgets, and custom items. After migration:
+
+
+const { data: dailySummary = [], isLoading: dailyLoading } = useDailySummary(selectedYear, selectedMonth + 1);
+const { data: obligations = [] } = useUpcomingObligations(365);
+const { data: categoryBudgets = [] } = useCategoryBudgets(selectedYear, selectedMonth + 1);
+const { data: customItems = [] } = useCustomBudgetItems();
+Remove the two useEffect blocks that fetched these. Remove reloadObligations and reloadCustomItems — these are no longer needed. When an obligation is fulfilled (via useFulfillObligation), TanStack Query's onSettled automatically invalidates the obligations cache.
+
+This also means the onObligationFulfilled prop chain we just added to UpcomingOwes can be removed — the cache invalidation handles it globally.
+
+5.4 Transactions.tsx
+
+The custom hooks (useTransactionFilters, useAccounts) can be refactored to use TanStack Query internally, or replaced entirely with query hooks. The pagination currentPage stays as local useState since it's pure UI state (not server data).
+
+5.5 Portfolio.tsx, Budget.tsx, Insights.tsx
+
+Follow the same pattern — remove useEffect + useState pairs, replace with the appropriate query hooks.
+
+TASK 6 — Remove the manual optimistic update wiring in MarkAsPaidDrawer and Cashflow
+Goal: The obligation fulfillment flow currently manually wires onObligationFulfilled callbacks through 3 component levels. With TanStack Query's useFulfillObligation, this entire chain disappears.
+
+In MarkAsPaidDrawer.tsx:
+
+
+// Replace manual API call + callback:
+const fulfillMutation = useFulfillObligation();
+
+// In handleSubmit:
+await fulfillMutation.mutateAsync({ obligationId: obligation.id, transactionId });
+The onSuccess prop simplifies back to just closing the drawer. The optimistic update happens inside useFulfillObligation.onMutate automatically, updating every cached obligations query in one place.
+
+Remove:
+
+onObligationFulfilled prop from UpcomingOwes
+onObligationFulfilled wiring in Cashflow.tsx
+setObligations optimistic updates in Cashflow.tsx and MarkAsPaidDrawer.tsx
+TASK 7 — Add error boundaries
+Goal: Right now if an API call fails, the page shows blank content or a spinner that never ends. Add React error boundaries so users get a graceful fallback.
+
+Create src/components/ErrorBoundary.tsx:
+
+
+import React, { Component, ReactNode } from 'react';
+import { IonButton, IonContent, IonPage } from '@ionic/react';
+
+interface Props { children: ReactNode; }
+interface State { hasError: boolean; }
+
+export class ErrorBoundary extends Component<Props, State> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <IonPage>
+          <IonContent className="flex items-center justify-center">
+            <div className="text-center p-6">
+              <p className="text-gray-500 mb-4">Something went wrong loading this page.</p>
+              <IonButton onClick={() => this.setState({ hasError: false })}>
+                Try again
+              </IonButton>
+            </div>
+          </IonContent>
+        </IonPage>
+      );
+    }
+    return this.props.children;
+  }
+}
+Wrap each lazy-loaded route in App.tsx with <ErrorBoundary>.
+
+TASK 8 — Cleanup
+After all pages are migrated:
+
+Delete src/hooks/useTransactionFilters.ts — replaced by useTransactions query hook
+Delete src/hooks/useAccounts.ts — replaced by useAccounts query hook
+Simplify UserContext — remove useReducer, keep only auth state
+Remove reloadObligations, reloadCustomItems functions from Cashflow.tsx
+Remove onObligationFulfilled prop chain from UpcomingOwes and Cashflow
+Remove manual isLoading / error state from every page that now uses query hooks
+What changes for the user after this
+Scenario	Before	After
+Navigate away and back to a page	Full re-fetch, spinner	Instant cached data, background refresh
+Refresh the app	All data lost, spinners everywhere	Profile instant, other data refetches once
+Mark a bill as paid	Manual wiring through 3 components	Cache updates automatically everywhere
+Two components need same data	Two API calls fire	One call, shared cache
+API call fails	Silent blank screen	Error boundary with retry button
+Categories / accounts data	Re-fetched on every page	Fetched once, cached 10–30 min
+Order of execution for a junior engineer
+Task 1 (install + provider) — no behaviour change, just wires up the library
+Task 2 (query keys) — no behaviour change, just a constants file
+Task 3 (query hooks) — no behaviour change, hooks exist but nothing uses them yet
+Task 4 (UserContext) — migrate the one context, verify login + preferences still work
+Task 5.1 (Patterns page) — simplest page, good first migration to verify the pattern
+Task 5.2 (Dashboard) — second migration
+Task 5.3 (Cashflow) — most complex, do last among the pages
+Task 5.4, 5.5 (remaining pages)
+Task 6 (remove manual wiring)
+Task 7 (error boundaries)
+Task 8 (cleanup)
+Test each page after each step. The migration is safe to do incrementally — old pages and new pages can coexist during migration.

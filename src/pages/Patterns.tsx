@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   IonPage,
   IonContent,
@@ -17,6 +17,7 @@ import {
 } from 'ionicons/icons';
 import Footer from '../components/Footer';
 import { patternService, RecurringPattern } from '../services/patternService';
+import { usePatterns } from '../hooks/queries/usePatternQueries';
 
 type SectionKey = 'INCOME' | 'EXPENSE' | 'OTHER';
 
@@ -27,23 +28,8 @@ const SECTIONS: { key: SectionKey; label: string; directions: string[] }[] = [
 ];
 
 const Patterns: React.FC = () => {
-  const [patterns, setPatterns] = useState<RecurringPattern[]>([]);
-  const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'ACTIVE' | 'PAUSED' | 'BROKEN'>('ACTIVE');
-
-  useEffect(() => {
-    const fetch = async () => {
-      try {
-        const data = await patternService.getPatterns(undefined, true);
-        setPatterns(data);
-      } catch (err) {
-        console.error('Failed to fetch patterns:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetch();
-  }, []);
+  const { data: patterns = [], isLoading: loading } = usePatterns();
 
   const formatInterval = (days: number): string => {
     if (days >= 28 && days <= 31) return 'Monthly';
