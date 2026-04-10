@@ -27,5 +27,5 @@ export const queryKeys = {
   upcomingObligations: (daysAhead: number, includeFulfilled?: boolean) => ['obligations', 'upcoming', daysAhead, includeFulfilled ?? false] as const,
 
   // Budget
-  customBudgetItems: ()                             => ['budget', 'customItems'] as const,
+  customBudgetItems: (year?: number, month?: number) => ['budget', 'customItems', year ?? null, month ?? null] as const,
 };

@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { budgetService, CreateCustomBudgetItemRequest, CustomBudgetItem } from '../../services/budgetService';
 import { queryKeys } from '../../lib/queryKeys';
 
-export function useCustomBudgetItems() {
+export function useCustomBudgetItems(year?: number, month?: number) {
   return useQuery({
-    queryKey: queryKeys.customBudgetItems(),
-    queryFn: () => budgetService.getCustomItems(),
+    queryKey: queryKeys.customBudgetItems(year, month),
+    queryFn: () => budgetService.getCustomItems(year, month),
   });
 }
 

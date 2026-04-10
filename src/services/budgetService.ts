@@ -14,6 +14,8 @@ export interface CustomBudgetItem {
   transactor_name: string | null;
   account_id: string | null;
   account_label: string | null;
+  paid_months: string[];         // ["2026-04", "2026-05", ...]
+  is_paid?: boolean;             // set when fetched with year+month context
 }
 
 export interface CreateCustomBudgetItemRequest {
@@ -27,13 +29,28 @@ export interface CreateCustomBudgetItemRequest {
 }
 
 class BudgetService {
-  async getCustomItems(): Promise<CustomBudgetItem[]> {
-    const r = await api.get<CustomBudgetItem[]>('/budget/custom-items');
+  async getCustomItems(year?: number, month?: number): Promise<CustomBudgetItem[]> {
+    const params = year && month ? { year, month } : undefined;
+    const r = await api.get<CustomBudgetItem[]>('/budget/custom-items', { params });
     return r.data;
   }
 
   async createCustomItem(data: CreateCustomBudgetItemRequest): Promise<CustomBudgetItem> {
     const r = await api.post<CustomBudgetItem>('/budget/custom-items', data);
+    return r.data;
+  }
+
+  async markCustomItemPaid(id: string, year: number, month: number, transactionId?: string): Promise<CustomBudgetItem> {
+    const r = await api.patch<CustomBudgetItem>(`/budget/custom-items/${id}/mark-paid`, {
+      year,
+      month,
+      transaction_id: transactionId ?? null,
+    });
+    return r.data;
+  }
+
+  async unmarkCustomItemPaid(id: string, year: number, month: number): Promise<CustomBudgetItem> {
+    const r = await api.patch<CustomBudgetItem>(`/budget/custom-items/${id}/unmark-paid`, { year, month });
     return r.data;
   }
 

@@ -9,13 +9,15 @@ import { useFulfillObligation } from '../hooks/queries/usePatternQueries';
 interface MarkAsPaidDrawerProps {
   obligation: PatternObligation | null;
   onDismiss: () => void;
-  onSuccess: (obligationId: string) => void;
+  onSuccess: (id: string) => void;
+  /** When provided, called instead of fulfillObligation (e.g. for custom budget items) */
+  onFulfill?: (transactionId?: string) => Promise<void>;
 }
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
-const MarkAsPaidDrawer: React.FC<MarkAsPaidDrawerProps> = ({ obligation, onDismiss, onSuccess }) => {
+const MarkAsPaidDrawer: React.FC<MarkAsPaidDrawerProps> = ({ obligation, onDismiss, onSuccess, onFulfill }) => {
   const fulfillObligation = useFulfillObligation();
   const isOpen = !!obligation;
   const txType = obligation?.pattern?.direction === 'income' ? 'income' : 'expense';
@@ -106,7 +108,11 @@ const MarkAsPaidDrawer: React.FC<MarkAsPaidDrawerProps> = ({ obligation, onDismi
         transactionId = tx.id;
       }
 
-      await fulfillObligation.mutateAsync({ obligationId: obligation.id, transactionId });
+      if (onFulfill) {
+        await onFulfill(transactionId);
+      } else {
+        await fulfillObligation.mutateAsync({ obligationId: obligation.id, transactionId });
+      }
       setToastColor('success');
       setToastMsg('Marked as paid!');
       const fulfilledId = obligation.id;

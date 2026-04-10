@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { IonIcon } from '@ionic/react';
 import {
   addOutline,
-  trashOutline,
   trendingUpOutline,
   trendingDownOutline,
   saveOutline,
@@ -27,7 +26,6 @@ const obligationDate = (dateStr: string) => {
   return `${ordinal(d)}`;
 };
 
-/** Truncate to maxLen characters, appending ellipsis if needed */
 const truncate = (s: string, maxLen = 14) =>
   s.length > maxLen ? s.slice(0, maxLen) + '…' : s;
 
@@ -41,8 +39,10 @@ interface BudgetTableProps {
   onMonthsCoverageChange: (v: number) => void;
   onAddItem: (section: BudgetSection) => void;
   onDeleteItem: (id: string) => void;
-  /** When provided, non-fulfilled obligation rows are tappable and call this */
+  /** When provided, non-fulfilled obligation rows are tappable */
   onObligationClick?: (obligation: PatternObligation) => void;
+  /** When provided, custom item rows are tappable (for mark-as-paid) */
+  onCustomItemClick?: (item: CustomBudgetItem) => void;
 }
 
 // ── Section config ──────────────────────────────────────────────────────────
@@ -56,18 +56,18 @@ interface SectionConfig {
 }
 
 const SECTIONS: SectionConfig[] = [
-  { key: 'income', label: 'Income', icon: trendingUpOutline, iconColor: 'text-green-600', headerBg: 'bg-gray-50' },
-  { key: 'bills', label: 'Bills & EMIs', icon: trendingDownOutline, iconColor: 'text-red-500', headerBg: 'bg-gray-50' },
-  { key: 'savings', label: 'Savings & Investments', icon: saveOutline, iconColor: 'text-blue-600', headerBg: 'bg-gray-50' },
-  { key: 'flexible', label: 'Flexible Spending', icon: flashOutline, iconColor: 'text-amber-500', headerBg: 'bg-gray-50' },
+  { key: 'income',   label: 'Income',              icon: trendingUpOutline,   iconColor: 'text-green-600', headerBg: 'bg-gray-50' },
+  { key: 'bills',    label: 'Bills & EMIs',         icon: trendingDownOutline, iconColor: 'text-red-500',   headerBg: 'bg-gray-50' },
+  { key: 'savings',  label: 'Savings & Investments',icon: saveOutline,         iconColor: 'text-blue-600',  headerBg: 'bg-gray-50' },
+  { key: 'flexible', label: 'Flexible Spending',    icon: flashOutline,        iconColor: 'text-amber-500', headerBg: 'bg-gray-50' },
 ];
 
 // ── Row types ────────────────────────────────────────────────────────────────
 
 type ObligationRow = { kind: 'obligation'; obligation: PatternObligation; done: boolean; amount: number; dateLabel: string; name: string };
-type FlexibleRow = { kind: 'flexible'; budget: CategoryBudget; done: boolean; amount: number; actual: number };
-type CustomRow = { kind: 'custom'; item: CustomBudgetItem; dateLabel: string };
-type BudgetRow = ObligationRow | FlexibleRow | CustomRow;
+type FlexibleRow   = { kind: 'flexible';   budget: CategoryBudget; done: boolean; amount: number; actual: number };
+type CustomRow     = { kind: 'custom';     item: CustomBudgetItem; dateLabel: string; done: boolean };
+type BudgetRow     = ObligationRow | FlexibleRow | CustomRow;
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -77,23 +77,21 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
   obligations,
   categoryBudgets,
   customItems,
-  monthsCoverage,
-  onMonthsCoverageChange,
   onAddItem,
-  onDeleteItem,
   onObligationClick,
+  onCustomItemClick,
 }) => {
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
   const now = new Date();
   const isPastMonth = year < now.getFullYear() ||
     (year === now.getFullYear() && month < now.getMonth());
 
+  const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+
   // ── Row builders ────────────────────────────────────────────────────────
 
-  const incomeObligations = obligations.filter(o => o.pattern?.direction === 'income');
-  const billObligations = obligations.filter(o => o.pattern?.direction === 'expense');
-  const customBySection = (s: BudgetSection) => customItems.filter(i => i.section === s);
+  const incomeObligations  = obligations.filter(o => o.pattern?.direction === 'income');
+  const billObligations    = obligations.filter(o => o.pattern?.direction === 'expense');
+  const customBySection    = (s: BudgetSection) => customItems.filter(i => i.section === s);
 
   const obligationRows = (obs: PatternObligation[]): ObligationRow[] =>
     obs.map(o => ({
@@ -121,36 +119,28 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
       kind: 'custom',
       item: i,
       dateLabel: i.day_of_month ? `${ordinal(i.day_of_month)}` : '—',
+      done: i.is_paid === true || (i.paid_months ?? []).includes(monthKey),
     }));
 
   const rowsForSection = (key: BudgetSection): BudgetRow[] => {
     switch (key) {
-      case 'income': return [...obligationRows(incomeObligations), ...customRows('income')];
-      case 'bills': return [...obligationRows(billObligations), ...customRows('bills')];
-      case 'savings': return customRows('savings');
+      case 'income':   return [...obligationRows(incomeObligations),  ...customRows('income')];
+      case 'bills':    return [...obligationRows(billObligations),     ...customRows('bills')];
+      case 'savings':  return customRows('savings');
       case 'flexible': return [...flexibleRows(), ...customRows('flexible')];
     }
   };
 
   // ── Totals ────────────────────────────────────────────────────────────────
 
-  const totalBills = billObligations.reduce((s, o) => s + patternService.getExpectedAmount(o), 0)
+  const totalBills    = billObligations.reduce((s, o) => s + patternService.getExpectedAmount(o), 0)
     + customBySection('bills').reduce((s, i) => s + i.amount, 0);
-  const totalSavings = customBySection('savings').reduce((s, i) => s + i.amount, 0);
+  const totalSavings  = customBySection('savings').reduce((s, i) => s + i.amount, 0);
   const totalFlexible = categoryBudgets.filter(c => !c.has_pattern).reduce((s, c) => s + c.avg_last_3_months, 0)
     + customBySection('flexible').reduce((s, i) => s + i.amount, 0);
-  const totalIncome = incomeObligations.reduce((s, o) => s + patternService.getExpectedAmount(o), 0)
+  const totalIncome   = incomeObligations.reduce((s, o) => s + patternService.getExpectedAmount(o), 0)
     + customBySection('income').reduce((s, i) => s + i.amount, 0);
-  const totalExpense = totalBills + totalSavings + totalFlexible;
-  const emergencyFund = totalExpense * monthsCoverage;
-
-  // ── Delete ────────────────────────────────────────────────────────────────
-
-  const handleDelete = async (id: string) => {
-    setDeletingId(id);
-    try { await Promise.resolve(onDeleteItem(id)); }
-    finally { setDeletingId(null); }
-  };
+  const totalExpense  = totalBills + totalSavings + totalFlexible;
 
   // ── Row renderers ─────────────────────────────────────────────────────────
 
@@ -166,12 +156,8 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
       >
         <td className="px-3! py-2.5!">
           <div className="flex items-center gap-2">
-            {row.done && (
-              <IonIcon icon={checkmarkCircle} className="text-base text-green-500" />
-            )}
-            <span className={'text-sm font-medium text-gray-800'}>
-              {truncate(row.name)}
-            </span>
+            {row.done && <IonIcon icon={checkmarkCircle} className="text-base text-green-500" />}
+            <span className="text-sm font-medium text-gray-800">{truncate(row.name)}</span>
           </div>
         </td>
         <td className="px-3! py-2.5! text-sm font-semibold text-gray-800 text-right whitespace-nowrap">
@@ -193,11 +179,10 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
         <td className="px-3! py-2.5!">
           <div className="flex items-center gap-2">
             {row.done && !isPastMonth && (
-              <IonIcon icon={checkmarkCircle} className="text-base flex-shrink-0 text-green-500" />
+              <IonIcon icon={checkmarkCircle} className="text-base shrink-0 text-green-500" />
             )}
             <div>
               <span className="text-sm font-medium text-gray-800">{truncate(row.budget.category_name)}</span>
-              {/* Progress bar — current month only */}
               {!isPastMonth && hasHistory && (
                 <div className="w-24 h-1 mt-1 bg-gray-100 rounded-full overflow-hidden">
                   <div
@@ -211,12 +196,10 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
         </td>
         <td className="px-3! py-2.5! text-right whitespace-nowrap">
           {isPastMonth ? (
-            /* Past month: show actual spent */
             <span className="text-sm font-semibold text-gray-800">
               {row.actual > 0 ? fmt(row.actual) : '—'}
             </span>
           ) : (
-            /* Current/future month: show budget (avg) with actual below */
             <>
               <span className="text-sm font-semibold text-gray-800">{hasHistory ? fmt(row.amount) : '—'}</span>
               {hasHistory && row.actual > 0 && (
@@ -230,28 +213,31 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
     );
   };
 
-  const renderCustomRow = (row: CustomRow) => (
-    <tr key={row.item.id} className="border-t border-gray-200 group">
-      <td className="px-3! py-2.5!">
-        <span className="text-sm font-medium text-gray-800">{truncate(row.item.label)}</span>
-      </td>
-      <td className="px-3! py-2.5! text-sm font-semibold text-gray-800 text-right whitespace-nowrap">
-        {fmt(row.item.amount)}
-      </td>
-      <td className="px-3! py-2.5! text-xs text-gray-400 text-right whitespace-nowrap">
-        <div className="flex items-center justify-between gap-2">
-          <span>{row.dateLabel}</span>
-          <button
-            onClick={() => handleDelete(row.item.id)}
-            disabled={deletingId === row.item.id}
-            className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-gray-300 hover:text-red-400 transition-all p-0.5 flex-shrink-0"
-          >
-            <IonIcon icon={trashOutline} className="text-sm" />
-          </button>
-        </div>
-      </td>
-    </tr>
-  );
+  const renderCustomRow = (row: CustomRow) => {
+    const clickable = !row.done && !isPastMonth && !!onCustomItemClick;
+    return (
+      <tr
+        key={row.item.id}
+        onClick={clickable ? () => onCustomItemClick!(row.item) : undefined}
+        className={`border-t border-gray-200 transition-opacity
+          ${row.done ? 'opacity-40' : ''}
+          ${clickable ? 'cursor-pointer active:bg-gray-50' : ''}`}
+      >
+        <td className="px-3! py-2.5!">
+          <div className="flex items-center gap-2">
+            {row.done && <IonIcon icon={checkmarkCircle} className="text-base text-green-500" />}
+            <span className="text-sm font-medium text-gray-800">{truncate(row.item.label)}</span>
+          </div>
+        </td>
+        <td className="px-3! py-2.5! text-sm font-semibold text-gray-800 text-right whitespace-nowrap">
+          {fmt(row.item.amount)}
+        </td>
+        <td className="px-3! py-2.5! text-xs text-gray-400 text-right whitespace-nowrap">
+          {row.dateLabel}
+        </td>
+      </tr>
+    );
+  };
 
   // ── Main render ───────────────────────────────────────────────────────────
 
@@ -272,7 +258,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
               const rows = rowsForSection(sec.key);
               return (
                 <React.Fragment key={sec.key}>
-                  <tr className={`${sec.headerBg}`}>
+                  <tr className={sec.headerBg}>
                     <td colSpan={3} className="bg-transparent">
                       <div className="flex px-3! py-1.5! items-center justify-between border border-b-0 rounded-t-xl border-gray-200">
                         <div className="flex items-center gap-1.5">
@@ -299,7 +285,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
                   ) : (
                     rows.map(row => {
                       if (row.kind === 'obligation') return renderObligationRow(row);
-                      if (row.kind === 'flexible') return renderFlexibleRow(row);
+                      if (row.kind === 'flexible')   return renderFlexibleRow(row);
                       return renderCustomRow(row);
                     })
                   )}
@@ -307,7 +293,6 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
               );
             })}
 
-            {/* Total */}
             <tr className="bg-primary">
               <td className="px-3! py-2! text-sm font-bold text-white">Total Monthly Expense</td>
               <td className="px-3! py-2! text-sm font-bold text-white text-right whitespace-nowrap">{fmt(totalExpense)}</td>
@@ -315,7 +300,7 @@ const BudgetTable: React.FC<BudgetTableProps> = ({
             </tr>
 
             {totalIncome > 0 && (
-              <tr className="bg-gray-100  border-t border-gray-200">
+              <tr className="bg-gray-100 border-t border-gray-200">
                 <td className="text-xs font-semibold text-green-700 px-3! py-2!">Expected Income</td>
                 <td className="text-sm font-bold text-green-700 text-right whitespace-nowrap px-3! py-2!">{fmt(totalIncome)}</td>
                 <td />

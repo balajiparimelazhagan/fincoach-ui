@@ -18,10 +18,11 @@ import AddBudgetItemDrawer from '../components/AddBudgetItemDrawer';
 import MarkAsPaidDrawer from '../components/MarkAsPaidDrawer';
 import { PatternObligation } from '../services/patternService';
 import { transactionService, Transaction } from '../services/transactionService';
-import { BudgetSection } from '../services/budgetService';
+import { budgetService, BudgetSection, CustomBudgetItem } from '../services/budgetService';
 import { useDailySummary, useCategoryBudgets } from '../hooks/queries/useStatsQueries';
 import { useUpcomingObligations } from '../hooks/queries/usePatternQueries';
 import { useCustomBudgetItems } from '../hooks/queries/useBudgetQueries';
+import { queryKeys } from '../lib/queryKeys';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -52,7 +53,8 @@ const Cashflow: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerSection, setDrawerSection] = useState<BudgetSection>('bills');
   const [payObligation, setPayObligation] = useState<PatternObligation | null>(null);
-  const [monthsCoverage, setMonthsCoverage] = useState<number>(() => {
+  const [payCustomItem, setPayCustomItem] = useState<CustomBudgetItem | null>(null);
+  const [monthsCoverage] = useState<number>(() => {
     const saved = localStorage.getItem(COVERAGE_KEY);
     return saved ? parseInt(saved) : 6;
   });
@@ -68,7 +70,7 @@ const Cashflow: React.FC = () => {
     useCategoryBudgets(selectedYear, selectedMonth + 1);
 
   const { data: customItems = [], isLoading: customLoading } =
-    useCustomBudgetItems();
+    useCustomBudgetItems(selectedYear, selectedMonth + 1);
 
   // ── Derived data ─────────────────────────────────────────────────────────────
   const dailyMap: Record<number, (typeof dailySummary)[0]> = {};
@@ -121,11 +123,6 @@ const Cashflow: React.FC = () => {
     setDrawerOpen(true);
   };
 
-  const handleMonthsCoverageChange = (v: number) => {
-    setMonthsCoverage(v);
-    localStorage.setItem(COVERAGE_KEY, String(v));
-  };
-
   const openNextMonthBudget = () => {
     const nextMonth = selectedMonth === 11 ? 0 : selectedMonth + 1;
     const nextYear = selectedMonth === 11 ? selectedYear + 1 : selectedYear;
@@ -138,6 +135,41 @@ const Cashflow: React.FC = () => {
       (old) => old?.map(o => o.id === obligationId ? { ...o, status: 'FULFILLED' as const } : o)
     );
   };
+
+  // Custom item mark-as-paid via MarkAsPaidDrawer
+  const customItemFulfill = payCustomItem
+    ? async (transactionId?: string) => {
+        await budgetService.markCustomItemPaid(payCustomItem.id, selectedYear, selectedMonth + 1, transactionId);
+        // Update cache optimistically
+        queryClient.setQueryData(
+          queryKeys.customBudgetItems(selectedYear, selectedMonth + 1),
+          (old: typeof customItems) => old?.map(i =>
+            i.id === payCustomItem.id
+              ? { ...i, is_paid: true, paid_months: [...(i.paid_months ?? []), `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`] }
+              : i
+          ) ?? []
+        );
+        queryClient.invalidateQueries({ queryKey: ['budget', 'customItems'] });
+      }
+    : undefined;
+
+  // Synthetic obligation shape for MarkAsPaidDrawer when showing a custom item
+  const customItemAsObligation: PatternObligation | null = payCustomItem
+    ? {
+        id: payCustomItem.id,
+        recurring_pattern_id: '',
+        expected_date: new Date(selectedYear, selectedMonth, payCustomItem.day_of_month ?? 1).toISOString(),
+        tolerance_days: 0,
+        expected_min_amount: payCustomItem.amount,
+        expected_max_amount: payCustomItem.amount,
+        status: 'EXPECTED',
+        transactor: payCustomItem.transactor_id
+          ? { id: payCustomItem.transactor_id, name: payCustomItem.transactor_name ?? payCustomItem.label, label: payCustomItem.transactor_name ?? payCustomItem.label }
+          : { id: '', name: payCustomItem.label, label: payCustomItem.label },
+        account: null,
+        pattern: { id: '', direction: payCustomItem.section === 'income' ? 'income' : 'expense', pattern_type: 'custom', interval_days: 30, amount_behavior: 'fixed', status: 'ACTIVE', confidence: 1 },
+      }
+    : null;
 
   return (
     <IonPage>
@@ -260,13 +292,14 @@ const Cashflow: React.FC = () => {
                 categoryBudgets={categoryBudgets}
                 customItems={customItems}
                 monthsCoverage={monthsCoverage}
-                onMonthsCoverageChange={handleMonthsCoverageChange}
+                onMonthsCoverageChange={() => {}}
                 onAddItem={handleAddItem}
                 onDeleteItem={(id) => queryClient.setQueryData(
-                  ['budget', 'customItems'],
+                  queryKeys.customBudgetItems(selectedYear, selectedMonth + 1),
                   (old: typeof customItems) => old?.filter(i => i.id !== id) ?? []
                 )}
                 onObligationClick={isCurrentMonth ? setPayObligation : undefined}
+                onCustomItemClick={isCurrentMonth ? setPayCustomItem : undefined}
               />
             )
           )}
@@ -283,9 +316,14 @@ const Cashflow: React.FC = () => {
         />
 
         <MarkAsPaidDrawer
-          obligation={payObligation}
-          onDismiss={() => setPayObligation(null)}
-          onSuccess={(obligationId) => handleObligationFulfilled(obligationId)}
+          obligation={payObligation ?? customItemAsObligation}
+          onDismiss={() => { setPayObligation(null); setPayCustomItem(null); }}
+          onSuccess={(id) => {
+            if (payObligation) handleObligationFulfilled(id);
+            setPayObligation(null);
+            setPayCustomItem(null);
+          }}
+          onFulfill={customItemFulfill}
         />
 
         <AddBudgetItemDrawer
