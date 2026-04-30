@@ -14,6 +14,7 @@ import UpcomingOwes from '../components/UpcomingOwes';
 import FlexibleSpending from '../components/FlexibleSpending';
 import DayTransactionModal from '../components/DayTransactionModal';
 import BudgetTable from '../components/BudgetTable';
+import SpendingPieChart from '../components/SpendingPieChart';
 import AddBudgetItemDrawer from '../components/AddBudgetItemDrawer';
 import MarkAsPaidDrawer from '../components/MarkAsPaidDrawer';
 import { PatternObligation } from '../services/patternService';
@@ -285,6 +286,7 @@ const Cashflow: React.FC = () => {
                 <IonSpinner name="bubbles" />
               </div>
             ) : (
+              <>
               <BudgetTable
                 year={selectedYear}
                 month={selectedMonth}
@@ -301,6 +303,8 @@ const Cashflow: React.FC = () => {
                 onObligationClick={isCurrentMonth ? setPayObligation : undefined}
                 onCustomItemClick={isCurrentMonth ? setPayCustomItem : undefined}
               />
+              <SpendingPieChart categories={categoryBudgets} />
+            </>
             )
           )}
         </div>
