@@ -31,6 +31,7 @@ import './theme/variables.css';
 
 // ── Lazy-loaded pages (route-level code splitting) ───────────────────────────
 const Login          = React.lazy(() => import('./pages/Login'));
+const AuthCallback   = React.lazy(() => import('./pages/AuthCallback'));
 const Dashboard      = React.lazy(() => import('./pages/Dashboard'));
 const Transactions   = React.lazy(() => import('./pages/Transactions'));
 const Insights       = React.lazy(() => import('./pages/Insights'));
@@ -55,6 +56,7 @@ const App: React.FC = () => {
           <IonReactRouter>
             <Suspense fallback={<PageFallback />}>
               <Route exact path="/login"        component={Login} />
+              <Route exact path="/auth/callback" component={AuthCallback} />
               <Route exact path="/dashboard"    component={Dashboard} />
               <Route exact path="/transactions" component={Transactions} />
               <Route exact path="/insights"     component={Insights} />
